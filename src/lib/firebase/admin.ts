@@ -8,7 +8,7 @@ if (!admin.apps.length) {
     // This will stop the execution and provide a clear error in the logs
     // if the environment variable is not found.
     throw new Error(
-      'CRITICAL: FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set. Please ensure it is configured in your hosting environment (e.g., Vercel).'
+      'CRITICAL: FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set. For local development, add it to the .env file. For production (e.g., Vercel), add it to your hosting environment variables.'
     );
   }
 
