@@ -1,23 +1,17 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
-import "./globals.css";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
-import { CartProvider } from "@/context/cart-context";
-import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/context/auth-context";
+import { CartProvider } from "@/context/cart-context";
 import { WishlistProvider } from "@/context/wishlist-context";
-import SplashScreen from "@/components/layout/SplashScreen";
+import { Toaster } from "@/components/ui/toaster";
+import "./globals.css";
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [loading, setLoading] = useState(true);
-
   return (
     <html lang="en" className="dark">
       <head>
@@ -35,22 +29,14 @@ export default function RootLayout({
         <meta name="description" content="Modern beauty brand selling cosmetics, skincare, wellness products, and self-care items." />
       </head>
       <body className="font-body antialiased">
-        {loading ? (
-          <SplashScreen onFinished={() => setLoading(false)} />
-        ) : (
-          <AuthProvider>
-            <WishlistProvider>
-              <CartProvider>
-                <div className="flex min-h-screen flex-col">
-                  <Header />
-                  <main className="flex-grow">{children}</main>
-                  <Footer />
-                </div>
-                <Toaster />
-              </CartProvider>
-            </WishlistProvider>
-          </AuthProvider>
-        )}
+        <AuthProvider>
+          <WishlistProvider>
+            <CartProvider>
+              {children}
+              <Toaster />
+            </CartProvider>
+          </WishlistProvider>
+        </AuthProvider>
       </body>
     </html>
   );
