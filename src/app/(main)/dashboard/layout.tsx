@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
@@ -5,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { Loader2 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function DashboardLayout({
   children,
@@ -36,15 +37,18 @@ export default function DashboardLayout({
     <SidebarProvider>
       <DashboardSidebar role={user.role} />
       <SidebarInset>
-         <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.5 }}
-            className="p-4 sm:p-6 lg:p-8"
-        >
-            {children}
-        </motion.div>
+        <AnimatePresence mode="wait">
+          <motion.div
+              key={router.asPath}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.5 }}
+              className="p-4 sm:p-6 lg:p-8"
+          >
+              {children}
+          </motion.div>
+        </AnimatePresence>
       </SidebarInset>
     </SidebarProvider>
   );

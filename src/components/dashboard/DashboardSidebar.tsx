@@ -1,3 +1,4 @@
+
 "use client"
 
 import Link from "next/link";
@@ -22,7 +23,9 @@ import {
     User, 
     Users,
     Settings,
-    LifeBuoy
+    LifeBuoy,
+    ShoppingBag,
+    Heart
 } from "lucide-react";
 
 type NavItem = {
@@ -33,7 +36,9 @@ type NavItem = {
 
 const navItemsByRole: Record<UserRole, NavItem[]> = {
   user: [
-    { href: "/dashboard/user", label: "Profile", icon: User },
+    { href: "/dashboard/user", label: "My Dashboard", icon: User },
+    { href: "/dashboard/user/orders", label: "Order History", icon: ShoppingBag },
+    { href: "/dashboard/user/wishlist", label: "My Wishlist", icon: Heart },
   ],
   moderator: [
     { href: "/dashboard/mod", label: "Content Review", icon: ShieldCheck },
@@ -70,7 +75,7 @@ export function DashboardSidebar({ role }: DashboardSidebarProps) {
                     <SidebarMenuItem key={item.href}>
                         <Link href={item.href}>
                             <SidebarMenuButton 
-                                isActive={pathname === item.href}
+                                isActive={pathname.startsWith(item.href)}
                                 tooltip={item.label}
                             >
                                 <item.icon />

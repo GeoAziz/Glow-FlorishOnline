@@ -1,3 +1,4 @@
+
 import { adminDb } from './firebase/admin';
 import type { Product, BlogPost } from "@/types";
 import type { Query } from 'firebase-admin/firestore';
@@ -215,6 +216,26 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   } catch (error) {
     console.error(`Error fetching product by slug ${slug}:`, error);
     return null;
+  }
+}
+
+export async function getProductsByIds(ids: string[]): Promise<Product[]> {
+  if (ids.length === 0) {
+    return [];
+  }
+  try {
+    const productRefs = ids.map(id => adminDb.collection('products').doc(id));
+    const productDocs = await adminDb.getAll(...productRefs);
+
+    return productDocs
+      .filter(doc => doc.exists)
+      .map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      } as Product));
+  } catch (error) {
+    console.error("Error fetching products by IDs:", error);
+    return [];
   }
 }
 

@@ -1,3 +1,4 @@
+
 'use server';
 
 import { adminDb } from '@/lib/firebase/admin';
@@ -20,13 +21,13 @@ export async function createOrder({ userId, items, total, shippingAddress }: Cre
   try {
     const orderRef = adminDb.collection('orders').doc();
     
-    const newOrder = {
+    const newOrder: Omit<Order, 'id' | 'createdAt'> = {
       userId,
       items,
       total,
       shippingAddress,
-      status: 'pending' as const,
-      createdAt: FieldValue.serverTimestamp(),
+      status: 'pending',
+      createdAt: FieldValue.serverTimestamp() as any, // Firestore handles the timestamp
     };
 
     await orderRef.set(newOrder);
@@ -59,4 +60,33 @@ export async function getOrder(orderId: string): Promise<Order | null> {
         console.error('Error fetching order:', error);
         return null;
     }
+}
+
+
+export async function getOrdersByUserId(userId: string): Promise<Order[]> {
+  if (!userId) {
+    return [];
+  }
+  try {
+    const ordersSnapshot = await adminDb.collection('orders')
+      .where('userId', '==', userId)
+      .orderBy('createdAt', 'desc')
+      .get();
+      
+    if (ordersSnapshot.empty) {
+      return [];
+    }
+
+    return ordersSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt.toDate(), // Convert Firestore Timestamp to JS Date
+      } as Order;
+    });
+  } catch (error) {
+    console.error('Error fetching orders for user:', error);
+    return [];
+  }
 }
