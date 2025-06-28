@@ -2,10 +2,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { getProducts } from "@/lib/data";
 import { ArrowRight, Star } from "lucide-react";
 import { ProductCard } from "./shop/components/product-card";
+import { NewsletterForm } from "./components/newsletter-form";
 
 export default async function Home() {
   const allProducts = await getProducts();
@@ -119,14 +119,7 @@ export default async function Home() {
               Subscribe to our newsletter for exclusive tips, new product
               launches, and special offers.
             </p>
-            <form className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto">
-              <Input
-                type="email"
-                placeholder="Enter your email"
-                className="text-base"
-              />
-              <Button type="submit" className="font-bold">Subscribe</Button>
-            </form>
+            <NewsletterForm />
           </div>
         </div>
       </section>

@@ -1,7 +1,4 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { ContactForm } from "./components/contact-form";
 import { Mail, Phone, MapPin } from "lucide-react";
 
 export default function ContactPage() {
@@ -22,27 +19,7 @@ export default function ContactPage() {
         <section className="mt-16 md:mt-24 grid md:grid-cols-2 gap-12">
           <div className="bg-card p-8 rounded-lg shadow-sm">
             <h2 className="text-3xl font-headline mb-6">Send us a Message</h2>
-            <form className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input id="name" placeholder="Your Name" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
-                <Input id="email" type="email" placeholder="you@example.com" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="message">Message</Label>
-                <Textarea
-                  id="message"
-                  placeholder="Your message..."
-                  rows={5}
-                />
-              </div>
-              <Button type="submit" className="w-full" size="lg">
-                Submit
-              </Button>
-            </form>
+            <ContactForm />
           </div>
 
           <div className="space-y-8">
