@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { createUserDocument } from "@/actions/user";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -30,7 +31,7 @@ type UserFormValue = z.infer<typeof formSchema>;
 export function AuthForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectUrl = searchParams.get("redirect") || "/";
+  const redirectUrl = searchParams.get("redirect") || "/dashboard";
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
@@ -47,13 +48,18 @@ export function AuthForm() {
     setLoading(true);
     try {
       if (activeTab === "signup") {
-        await createUserWithEmailAndPassword(auth, data.email, data.password);
+        const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+        // Create a corresponding document in Firestore
+        await createUserDocument({
+          uid: userCredential.user.uid,
+          email: userCredential.user.email,
+        });
       } else {
         await signInWithEmailAndPassword(auth, data.email, data.password);
       }
       toast({
         title: "Success!",
-        description: `You have successfully ${activeTab === 'signup' ? 'signed up' : 'logged in'}.`,
+        description: `You have successfully ${activeTab === 'signup' ? 'signed up' : 'logged in'}. Redirecting...`,
       });
       router.push(redirectUrl);
     } catch (error: any) {
@@ -62,8 +68,7 @@ export function AuthForm() {
         description: error.message,
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
+       setLoading(false);
     }
   };
 

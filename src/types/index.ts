@@ -1,6 +1,12 @@
 import type { User as FirebaseUser } from "firebase/auth";
 
-export type User = FirebaseUser;
+export type UserRole = 'admin' | 'moderator' | 'user';
+
+export interface AppUser extends FirebaseUser {
+  role: UserRole;
+}
+
+export type User = AppUser;
 
 export type Product = {
   id: string;
