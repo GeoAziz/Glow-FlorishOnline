@@ -2,26 +2,37 @@ import admin from 'firebase-admin';
 
 // Check if the app is already initialized to prevent re-initialization
 if (!admin.apps.length) {
-  const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+  const {
+    FIREBASE_PROJECT_ID,
+    FIREBASE_PRIVATE_KEY,
+    FIREBASE_CLIENT_EMAIL,
+  } = process.env;
 
-  if (!serviceAccountJson) {
-    // This will stop the execution and provide a clear error in the logs
-    // if the environment variable is not found.
+  if (
+    !FIREBASE_PROJECT_ID ||
+    !FIREBASE_PRIVATE_KEY ||
+    !FIREBASE_CLIENT_EMAIL
+  ) {
     throw new Error(
-      'CRITICAL: FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set. For local development, add it to the .env file. For production (e.g., Vercel), add it to your hosting environment variables.'
+      'CRITICAL: Missing Firebase Admin SDK credentials. Please ensure FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY, and FIREBASE_CLIENT_EMAIL are set in your .env file for local development or in your hosting environment variables for production.'
     );
   }
 
   try {
-    // Attempt to parse and initialize the SDK
-    const serviceAccount = JSON.parse(serviceAccountJson);
+    // Construct the service account object from individual environment variables
+    const serviceAccount = {
+      projectId: FIREBASE_PROJECT_ID,
+      // The private key from the .env file has its newlines escaped. We need to un-escape them.
+      privateKey: FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      clientEmail: FIREBASE_CLIENT_EMAIL,
+    };
+    
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     });
   } catch (error: any) {
-    // This will catch errors from invalid JSON and provide a more helpful message.
     throw new Error(
-      `CRITICAL: Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY. Ensure it's a valid, unescaped JSON string. Original Error: ${error.message}`
+      `CRITICAL: Failed to initialize Firebase Admin SDK. Check your environment variables. Original Error: ${error.message}`
     );
   }
 }
