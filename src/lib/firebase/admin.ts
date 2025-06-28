@@ -1,41 +1,70 @@
-
 import admin from 'firebase-admin';
 import path from 'path';
 import fs from 'fs';
 
-// Check if the app is already initialized to prevent re-initialization
-if (!admin.apps.length) {
-  try {
-    // Construct the absolute path to the service account key file
-    const serviceAccountPath = path.resolve(process.cwd(), 'service-account-key.json');
+function initializeFirebaseAdmin() {
+  // If already initialized, no need to do anything
+  if (admin.apps.length > 0) {
+    return;
+  }
+
+  // Method 1: Vercel/Production Environment
+  // Check for the existence of Vercel-specific environment variables or the main private key.
+  if (process.env.VERCEL || process.env.FIREBASE_PRIVATE_KEY) {
+    console.log("Production environment detected. Initializing Firebase Admin SDK with environment variables.");
     
-    // Check if the file exists before trying to read it
-    if (!fs.existsSync(serviceAccountPath)) {
+    // Ensure all required variables are present
+    if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_PRIVATE_KEY || !process.env.FIREBASE_CLIENT_EMAIL) {
       throw new Error(
-        'CRITICAL: `service-account-key.json` not found in the project root. Please ensure the file exists and is correctly named.'
+        'CRITICAL: Missing Firebase Admin SDK environment variables. ' +
+        'Please set FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY, and FIREBASE_CLIENT_EMAIL in your Vercel project settings.'
       );
     }
-
-    // Read and parse the service account key file
-    const serviceAccountString = fs.readFileSync(serviceAccountPath, 'utf8');
-    const serviceAccount = JSON.parse(serviceAccountString);
-
-    // Initialize the Firebase Admin SDK with the credentials from the file
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-    });
-
-  } catch (error: any) {
-    // Log the detailed error for debugging purposes
-    console.error('CRITICAL: Failed to initialize Firebase Admin SDK.', error);
     
-    // Throw a more user-friendly error to be displayed
-    throw new Error(
-      `CRITICAL: Failed to initialize Firebase Admin SDK. Please check your service-account-key.json file. Original Error: ${error.message}`
-    );
+    try {
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId: process.env.FIREBASE_PROJECT_ID,
+          // Vercel escapes newlines, so we need to replace them back
+          privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        }),
+      });
+      console.log("Firebase Admin SDK initialized successfully for production.");
+      return; // Success
+    } catch (error: any) {
+      // This will catch parsing errors if the credentials are malformed
+      throw new Error(`CRITICAL: Failed to initialize Firebase from environment variables. Check their format. Error: ${error.message}`);
+    }
   }
+
+  // Method 2: Local Development Environment
+  // Try to use the service-account-key.json file.
+  try {
+    console.log("Local environment detected. Attempting to initialize from service-account-key.json.");
+    const serviceAccountPath = path.resolve(process.cwd(), 'service-account-key.json');
+    if (fs.existsSync(serviceAccountPath)) {
+      const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+      });
+      console.log("Firebase Admin SDK initialized successfully from local file.");
+      return; // Success
+    }
+  } catch (error: any) {
+    console.error("Error initializing from local file, this might be expected if file is missing.", error);
+  }
+
+  // If both methods fail, throw a clear error.
+  throw new Error(
+    'CRITICAL: Firebase Admin SDK initialization failed. Could not find credentials. \n' +
+    'For Production (Vercel): Ensure FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY, and FIREBASE_CLIENT_EMAIL are set. \n' +
+    'For Local Development: Ensure `service-account-key.json` exists in the project root.'
+  );
 }
 
-const adminDb = admin.firestore();
+// Initialize the app using our robust function
+initializeFirebaseAdmin();
 
+const adminDb = admin.firestore();
 export { adminDb };
