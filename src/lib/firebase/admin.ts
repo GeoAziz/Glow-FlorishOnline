@@ -2,17 +2,17 @@ import admin from 'firebase-admin';
 
 if (!admin.apps.length) {
   try {
-    const serviceAccount = require('../../../service-account-key.json');
+    const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+    if (!serviceAccountJson) {
+      // This error will be caught by the try-catch block
+      throw new Error("FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set.");
+    }
+    const serviceAccount = JSON.parse(serviceAccountJson);
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     });
   } catch(error) {
     console.error("Failed to initialize Firebase Admin SDK:", error);
-    // In a production environment, you would use environment variables
-    // For example:
-    // admin.initializeApp({
-    //   credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY))
-    // });
   }
 }
 
