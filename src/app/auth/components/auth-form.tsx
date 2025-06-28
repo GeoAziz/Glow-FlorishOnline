@@ -8,7 +8,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
 } from "firebase/auth";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { auth } from "@/lib/firebase/client";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,8 @@ type UserFormValue = z.infer<typeof formSchema>;
 
 export function AuthForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get("redirect") || "/";
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
@@ -53,7 +55,7 @@ export function AuthForm() {
         title: "Success!",
         description: `You have successfully ${activeTab === 'signup' ? 'signed up' : 'logged in'}.`,
       });
-      router.push("/");
+      router.push(redirectUrl);
     } catch (error: any) {
       toast({
         title: "Authentication Error",

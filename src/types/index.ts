@@ -25,3 +25,31 @@ export type CartItem = {
   product: Product;
   quantity: number;
 };
+
+export type ShippingAddress = {
+  fullName: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+};
+
+export type OrderItem = {
+  productId: string;
+  name:string;
+  price: number;
+  quantity: number;
+  image: string;
+};
+
+export type Order = {
+    id: string;
+    userId: string;
+    items: OrderItem[];
+    total: number;
+    shippingAddress: ShippingAddress;
+    status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+    createdAt: Date;
+};
