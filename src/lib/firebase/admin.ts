@@ -1,4 +1,11 @@
+
 import admin from 'firebase-admin';
+import { config } from 'dotenv';
+import path from 'path';
+
+// Explicitly load environment variables from the .env file in the project root.
+// This is the most reliable way to ensure they are loaded in any environment.
+config({ path: path.resolve(process.cwd(), '.env') });
 
 // Check if the app is already initialized to prevent re-initialization
 if (!admin.apps.length) {
@@ -22,7 +29,7 @@ if (!admin.apps.length) {
     // Construct the service account object from individual environment variables
     const serviceAccount = {
       projectId: FIREBASE_PROJECT_ID,
-      // The private key from the .env file has its newlines escaped. We need to un-escape them.
+      // The private key from the .env file might have its newlines escaped. We need to un-escape them.
       privateKey: FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
       clientEmail: FIREBASE_CLIENT_EMAIL,
     };
