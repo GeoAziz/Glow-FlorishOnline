@@ -93,7 +93,16 @@ export function AuthForm() {
   };
 
   const handleAuthError = (error: any) => {
-    console.error("Authentication error:", error);
+    // Don't log common user errors like invalid credentials to the console
+    // as they are expected user actions, not application errors.
+    const commonAuthErrors = [
+      "auth/invalid-credential",
+      "auth/user-not-found",
+      "auth/wrong-password",
+    ];
+    if (!commonAuthErrors.includes(error.code)) {
+      console.error("Authentication error:", error);
+    }
     setFormError(getFirebaseAuthErrorMessage(error.code));
     setLoading(false);
   }
