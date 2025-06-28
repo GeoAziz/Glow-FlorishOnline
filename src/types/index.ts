@@ -1,3 +1,7 @@
+import type { User as FirebaseUser } from "firebase/auth";
+
+export type User = FirebaseUser;
+
 export type Product = {
   id: string;
   slug: string;

@@ -5,6 +5,8 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { CartProvider } from "@/context/cart-context";
 import { Toaster } from "@/components/ui/toaster";
+import { AuthProvider } from "@/context/auth-context";
+import { WishlistProvider } from "@/context/wishlist-context";
 
 export const metadata: Metadata = {
   title: "Glow & Flourish Online",
@@ -32,14 +34,18 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <CartProvider>
-          <div className="flex min-h-screen flex-col">
-            <Header />
-            <main className="flex-grow">{children}</main>
-            <Footer />
-          </div>
-          <Toaster />
-        </CartProvider>
+        <AuthProvider>
+          <WishlistProvider>
+            <CartProvider>
+              <div className="flex min-h-screen flex-col">
+                <Header />
+                <main className="flex-grow">{children}</main>
+                <Footer />
+              </div>
+              <Toaster />
+            </CartProvider>
+          </WishlistProvider>
+        </AuthProvider>
       </body>
     </html>
   );

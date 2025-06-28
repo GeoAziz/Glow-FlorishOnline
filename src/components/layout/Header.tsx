@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, ShoppingCart, User } from "lucide-react";
+import { Menu, ShoppingCart } from "lucide-react";
 
 import Logo from "@/components/shared/Logo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/hooks/use-cart";
+import { UserNav } from "./UserNav";
 
 const navLinks = [
   { href: "/shop", label: "Shop" },
@@ -83,10 +84,8 @@ export default function Header() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" aria-label="My Account">
-              <User className="h-5 w-5" />
-            </Button>
+          <div className="flex items-center gap-4">
+            <UserNav />
             <Button asChild variant="ghost" size="icon" aria-label="Shopping Cart">
               <Link href="/cart" className="relative">
                 <ShoppingCart className="h-5 w-5" />

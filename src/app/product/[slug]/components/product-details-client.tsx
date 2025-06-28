@@ -8,6 +8,11 @@ import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/use-cart";
 import { Separator } from "@/components/ui/separator";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { useAuth } from "@/hooks/use-auth";
+import { useWishlist } from "@/hooks/use-wishlist";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 interface ProductDetailsClientProps {
   product: Product;
@@ -17,14 +22,38 @@ export function ProductDetailsClient({ product }: ProductDetailsClientProps) {
   const [quantity, setQuantity] = useState(1);
   const { addToCart } = useCart();
   const [activeImage, setActiveImage] = useState(product.images[0]);
+  
+  const { user } = useAuth();
+  const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
+  const router = useRouter();
+  const { toast } = useToast();
 
   const handleAddToCart = () => {
     addToCart(product, quantity);
+  };
+
+  const handleWishlistToggle = () => {
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to manage your wishlist.",
+        variant: "destructive"
+      });
+      router.push("/auth");
+      return;
+    }
+    if (isInWishlist(product.id)) {
+      removeFromWishlist(product.id);
+    } else {
+      addToWishlist(product.id);
+    }
   };
   
   const averageRating = product.reviews.length > 0 
     ? product.reviews.reduce((acc, review) => acc + review.rating, 0) / product.reviews.length
     : 0;
+  
+  const isWishlisted = isInWishlist(product.id);
 
   return (
     <div className="grid md:grid-cols-2 gap-8 lg:gap-16">
@@ -91,8 +120,8 @@ export function ProductDetailsClient({ product }: ProductDetailsClientProps) {
                 </Button>
             </div>
             <Button size="lg" className="flex-1" onClick={handleAddToCart} disabled={product.stock === 0}>Add to Cart</Button>
-            <Button size="lg" variant="outline" aria-label="Add to wishlist">
-                <Heart className="h-5 w-5" />
+            <Button size="lg" variant="outline" aria-label="Add to wishlist" onClick={handleWishlistToggle}>
+                <Heart className={cn("h-5 w-5", isWishlisted && "fill-primary text-primary")} />
             </Button>
         </div>
 
