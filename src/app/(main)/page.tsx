@@ -5,7 +5,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { getProducts } from "@/lib/data";
 import { ArrowRight, Star } from "lucide-react";
 import { ProductCard } from "./shop/components/product-card";
-import { NewsletterForm } from "../components/newsletter-form";
+import { NewsletterForm } from "@/components/newsletter-form";
 
 export default async function Home() {
   const allProducts = await getProducts();

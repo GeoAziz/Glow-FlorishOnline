@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle } from "lucide-react";
 import Link from "next/link";
 
-export default function AboutPage() {
+export default function OurStoryPage() {
   return (
     <div className="bg-background">
       <div className="container mx-auto px-4 py-16 md:py-24">

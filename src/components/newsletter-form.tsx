@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { useState } from "react";
-import { subscribeToNewsletter } from "@/actions/newsletter";
-import { useToast } from "@/hooks/use-toast";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { subscribeToNewsletter } from '@/actions/newsletter';
+import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 
 const newsletterSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email." }),
+  email: z.string().email({ message: "Please enter a valid email address." }),
 });
 
 type NewsletterFormValues = z.infer<typeof newsletterSchema>;
@@ -35,7 +35,7 @@ export function NewsletterForm() {
 
     if (result.success) {
       toast({
-        title: "Success!",
+        title: "Subscribed!",
         description: result.message,
       });
       reset();
@@ -49,25 +49,18 @@ export function NewsletterForm() {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto"
-    >
-      <div className="flex-1">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex w-full max-w-sm mx-auto items-start space-x-2">
+      <div className="flex-1 space-y-1">
         <Input
           type="email"
           placeholder="Enter your email"
-          className="text-base"
           {...register("email")}
           disabled={loading}
+          className="text-base"
         />
-        {errors.email && (
-          <p className="text-xs text-destructive text-left mt-1">
-            {errors.email.message}
-          </p>
-        )}
+        {errors.email && <p className="text-xs text-destructive text-left">{errors.email.message}</p>}
       </div>
-      <Button type="submit" className="font-bold" disabled={loading}>
+      <Button type="submit" disabled={loading}>
         {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         Subscribe
       </Button>
