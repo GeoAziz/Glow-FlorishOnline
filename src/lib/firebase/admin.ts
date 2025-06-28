@@ -1,45 +1,37 @@
 
 import admin from 'firebase-admin';
-import { config } from 'dotenv';
 import path from 'path';
-
-// Explicitly load environment variables from the .env file in the project root.
-// This is the most reliable way to ensure they are loaded in any environment.
-config({ path: path.resolve(process.cwd(), '.env') });
+import fs from 'fs';
 
 // Check if the app is already initialized to prevent re-initialization
 if (!admin.apps.length) {
-  const {
-    FIREBASE_PROJECT_ID,
-    FIREBASE_PRIVATE_KEY,
-    FIREBASE_CLIENT_EMAIL,
-  } = process.env;
-
-  if (
-    !FIREBASE_PROJECT_ID ||
-    !FIREBASE_PRIVATE_KEY ||
-    !FIREBASE_CLIENT_EMAIL
-  ) {
-    throw new Error(
-      'CRITICAL: Missing Firebase Admin SDK credentials. Please ensure FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY, and FIREBASE_CLIENT_EMAIL are set in your .env file for local development or in your hosting environment variables for production.'
-    );
-  }
-
   try {
-    // Construct the service account object from individual environment variables
-    const serviceAccount = {
-      projectId: FIREBASE_PROJECT_ID,
-      // The private key from the .env file might have its newlines escaped. We need to un-escape them.
-      privateKey: FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-      clientEmail: FIREBASE_CLIENT_EMAIL,
-    };
+    // Construct the absolute path to the service account key file
+    const serviceAccountPath = path.resolve(process.cwd(), 'service-account-key.json');
     
+    // Check if the file exists before trying to read it
+    if (!fs.existsSync(serviceAccountPath)) {
+      throw new Error(
+        'CRITICAL: `service-account-key.json` not found in the project root. Please ensure the file exists and is correctly named.'
+      );
+    }
+
+    // Read and parse the service account key file
+    const serviceAccountString = fs.readFileSync(serviceAccountPath, 'utf8');
+    const serviceAccount = JSON.parse(serviceAccountString);
+
+    // Initialize the Firebase Admin SDK with the credentials from the file
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     });
+
   } catch (error: any) {
+    // Log the detailed error for debugging purposes
+    console.error('CRITICAL: Failed to initialize Firebase Admin SDK.', error);
+    
+    // Throw a more user-friendly error to be displayed
     throw new Error(
-      `CRITICAL: Failed to initialize Firebase Admin SDK. Check your environment variables. Original Error: ${error.message}`
+      `CRITICAL: Failed to initialize Firebase Admin SDK. Please check your service-account-key.json file. Original Error: ${error.message}`
     );
   }
 }
