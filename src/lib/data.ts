@@ -1,6 +1,10 @@
+import { adminDb } from './firebase/admin';
 import type { Product } from "@/types";
+import type { Query } from 'firebase-admin/firestore';
 
-const products: Product[] = [
+// This data is now used for seeding the database only.
+// See scripts/seed-db.ts
+export const initialProducts: Product[] = [
   {
     id: "1",
     slug: "radiant-glow-serum",
@@ -134,37 +138,68 @@ export async function getProducts(
   minPrice?: number,
   maxPrice?: number
 ): Promise<Product[]> {
-  // In a real app, this would be a database query.
-  let filteredProducts = products;
+  try {
+    let query: Query = adminDb.collection('products');
 
-  if (category) {
-    filteredProducts = filteredProducts.filter(
-      (p) => p.category === category
-    );
+    if (category) {
+      query = query.where('category', '==', category);
+    }
+    
+    const snapshot = await query.orderBy('name').get();
+    
+    if (snapshot.empty) {
+      return [];
+    }
+
+    let products = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as Product[];
+    
+    // In-memory price filtering
+    if (minPrice !== undefined) {
+      products = products.filter(p => p.price >= minPrice);
+    }
+    if (maxPrice !== undefined) {
+      products = products.filter(p => p.price <= maxPrice);
+    }
+
+    return products;
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    return [];
   }
-  
-  if(minPrice) {
-    filteredProducts = filteredProducts.filter(
-      (p) => p.price >= minPrice
-    );
-  }
-
-  if(maxPrice) {
-    filteredProducts = filteredProducts.filter(
-      (p) => p.price <= maxPrice
-    );
-  }
-
-
-  return Promise.resolve(filteredProducts);
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
-  const product = products.find((p) => p.slug === slug);
-  return Promise.resolve(product || null);
+  try {
+    const productsRef = adminDb.collection('products');
+    const snapshot = await productsRef.where('slug', '==', slug).limit(1).get();
+
+    if (snapshot.empty) {
+      return null;
+    }
+
+    const doc = snapshot.docs[0];
+    return {
+      id: doc.id,
+      ...doc.data()
+    } as Product;
+  } catch (error) {
+    console.error(`Error fetching product by slug ${slug}:`, error);
+    return null;
+  }
 }
 
-export function getCategories() {
-  const categories = [...new Set(products.map(p => p.category))];
-  return categories;
+export async function getCategories(): Promise<string[]> {
+  try {
+    const snapshot = await adminDb.collection('categories').orderBy('name').get();
+    if (snapshot.empty) {
+        return [];
+    }
+    return snapshot.docs.map(doc => doc.data().name as string);
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    return [];
+  }
 }

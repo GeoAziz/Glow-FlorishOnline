@@ -3,11 +3,11 @@ import { ShopClient } from "./components/shop-client";
 
 export default async function ShopPage() {
   const products = await getProducts();
-  const categories = getCategories();
+  const categories = await getCategories();
   
   const prices = products.map(p => p.price);
-  const minPrice = Math.min(...prices);
-  const maxPrice = Math.max(...prices);
+  const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+  const maxPrice = prices.length > 0 ? Math.max(...prices) : 100;
 
   return (
     <div className="container mx-auto px-4 py-8">
