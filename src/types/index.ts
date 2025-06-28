@@ -21,6 +21,19 @@ export type Product = {
   stock: number;
 };
 
+export type BlogPost = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  author: string;
+  publishedDate: Date;
+  imageUrl: string;
+  imageHint?: string;
+  tags?: string[];
+};
+
 export type CartItem = {
   product: Product;
   quantity: number;

@@ -1,5 +1,5 @@
 import { adminDb } from './firebase/admin';
-import type { Product } from "@/types";
+import type { Product, BlogPost } from "@/types";
 import type { Query } from 'firebase-admin/firestore';
 
 // This data is now used for seeding the database only.
@@ -133,6 +133,33 @@ export const initialProducts: Product[] = [
   },
 ];
 
+export const initialBlogPosts: Omit<BlogPost, 'id' | 'publishedDate' | 'content'>[] = [
+  {
+    slug: 'the-ultimate-guide-to-a-glowing-skincare-routine',
+    title: 'The Ultimate Guide to a Glowing Skincare Routine',
+    excerpt: 'Unlock the secrets to radiant skin with our step-by-step guide. From cleansing to moisturizing, we cover everything you need to know to build a routine that works for you.',
+    author: 'Eleanor Vance',
+    imageUrl: 'https://placehold.co/800x400.png',
+    imageHint: 'skincare products',
+    tags: ['Skincare', 'Routine', 'Tips'],
+  },
+  {
+    slug: '5-self-care-rituals-to-boost-your-well-being',
+    title: '5 Self-Care Rituals to Boost Your Well-Being',
+    excerpt: 'In the hustle and bustle of daily life, taking time for yourself is more important than ever. Discover five simple self-care rituals you can incorporate into your week to relax, recharge, and flourish.',
+    author: 'Jasper Moon',
+    imageUrl: 'https://placehold.co/800x400.png',
+    imageHint: 'wellness relax',
+    tags: ['Wellness', 'Self-Care', 'Mindfulness'],
+  },
+];
+
+export const blogPostContent: {[key: string]: string} = {
+  'the-ultimate-guide-to-a-glowing-skincare-routine': 'Building a consistent skincare routine is the cornerstone of healthy, glowing skin. It doesn\'t need to be complicated, but it should be consistent. Here are the essential steps for a routine that will leave your skin feeling nourished and radiant.\n\n**Step 1: Cleanse**\nStart with a gentle cleanser to remove makeup, dirt, and impurities. For dry or sensitive skin, a cream cleanser is ideal. For oily or acne-prone skin, a gel or foaming cleanser works well. Massage it into your skin for at least 60 seconds before rinsing with lukewarm water.\n\n**Step 2: Tone (Optional but Recommended)**\nA toner helps to remove any last traces of dirt and balances your skin\'s pH. Look for alcohol-free formulas with hydrating or soothing ingredients like rosewater or hyaluronic acid.\n\n**Step 3: Treat with Serums**\nThis is where you target specific concerns. A Vitamin C serum in the morning can protect against environmental damage, while a retinol or peptide serum at night can help with anti-aging. Apply a few drops to your face and neck.\n\n**Step 4: Moisturize**\nHydration is key for all skin types. A good moisturizer locks in all the benefits of your previous steps and keeps your skin barrier healthy. Choose a lightweight lotion for oily skin or a richer cream for dry skin.\n\n**Step 5: Protect with SPF (AM Routine)**\nSunscreen is non-negotiable. It\'s the most effective anti-aging product you can use. Apply a broad-spectrum SPF of 30 or higher every single morning, even on cloudy days.',
+  '5-self-care-rituals-to-boost-your-well-being': 'Self-care isn\'t selfish; it\'s essential for maintaining your mental, emotional, and physical health. Here are five simple yet powerful rituals to help you reconnect with yourself.\n\n**1. Mindful Mornings**\nInstead of grabbing your phone first thing, take five minutes to stretch, meditate, or simply enjoy a cup of tea in silence. Setting a calm tone for your day can have a profound impact on your stress levels.\n\n**2. The Weekly Unwind Bath**\nTransform your bathroom into a spa once a week. Add Epsom salts, essential oils, or a bath bomb to a warm bath. Light a candle, play some calming music, and let the stress of the week melt away.\n\n**3. Digital Detox Hour**\nDesignate one hour each day where you put all your devices away. Use this time to read a book, go for a walk, work on a hobby, or simply be present in your surroundings without digital distractions.\n\n**4. Nourish from Within**\nTake the time to prepare a truly nourishing meal for yourself. Focus on whole foods, vibrant colors, and flavors you love. Eating mindfully, without distractions, can turn a simple meal into a restorative experience.\n\n**5. Gratitude Journaling**\nBefore bed, write down three things you were grateful for that day. This simple practice can shift your focus from what\'s wrong to what\'s right, promoting a more positive outlook on life.',
+};
+
+
 export async function getProducts(
   category?: string,
   minPrice?: number,
@@ -201,5 +228,47 @@ export async function getCategories(): Promise<string[]> {
   } catch (error) {
     console.error("Error fetching categories:", error);
     return [];
+  }
+}
+
+export async function getBlogPosts(): Promise<BlogPost[]> {
+  try {
+    const snapshot = await adminDb.collection('blog_posts').orderBy('publishedDate', 'desc').get();
+    if (snapshot.empty) {
+      return [];
+    }
+    return snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        publishedDate: data.publishedDate.toDate(),
+      } as BlogPost;
+    });
+  } catch (error) {
+    console.error("Error fetching blog posts:", error);
+    return [];
+  }
+}
+
+export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> {
+  try {
+    const doc = await adminDb.collection('blog_posts').doc(slug).get();
+
+    if (!doc.exists) {
+      return null;
+    }
+
+    const data = doc.data();
+    if (!data) return null;
+
+    return {
+      id: doc.id,
+      ...data,
+      publishedDate: data.publishedDate.toDate(),
+    } as BlogPost;
+  } catch (error) {
+    console.error(`Error fetching blog post by slug ${slug}:`, error);
+    return null;
   }
 }
