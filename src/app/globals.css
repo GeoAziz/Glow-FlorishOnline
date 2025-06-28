@@ -41,6 +41,14 @@ body {
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Splash Screen Colors */
+    --splash-deep-space-start: 235 53% 11%;
+    --splash-deep-space-end: 235 41% 17%;
+    --splash-cyan-hsl: 181 100% 50%;
+    --splash-rose-gold-hsl: 350 35% 57%;
+    --splash-pale-white-hsl: 0 0% 95%;
+    --splash-light-gold-hsl: 40 69% 70%;
   }
   .dark {
     --background: 350 10% 15%;
@@ -85,4 +93,61 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+
+@layer utilities {
+  .bg-splash-gradient {
+    background: linear-gradient(135deg, hsl(var(--splash-deep-space-start)), hsl(var(--splash-deep-space-end)));
+  }
+
+  .bg-grid-pattern {
+      background-image:
+      linear-gradient(hsl(var(--splash-cyan-hsl) / 0.05) 1px, transparent 1px),
+      linear-gradient(to right, hsl(var(--splash-cyan-hsl) / 0.05) 1px, transparent 1px);
+    background-size: 3rem 3rem;
+  }
+
+  .bg-scanline-gradient {
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      hsl(var(--splash-cyan-hsl) / 0.1) 50%,
+      transparent 100%
+    );
+    background-size: 100% 4px;
+  }
+}
+
+@keyframes twinkle {
+    from { opacity: 0.7; }
+    to { opacity: 0.3; }
+}
+
+@keyframes scrolling-grid {
+    0% { background-position: 0 0; }
+    100% { background-position: -3rem -3rem; }
+}
+
+@keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fade-in-pulse {
+    0% { opacity: 0; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.05); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes typewriter {
+  from { width: 0; }
+  to { width: 18ch; }
+}
+
+@keyframes scanline {
+  0% { transform: translateY(-100%); opacity: 0; }
+  10% { opacity: 0.4; }
+  90% { opacity: 0.4; }
+  100% { transform: translateY(100%); opacity: 0; }
 }
