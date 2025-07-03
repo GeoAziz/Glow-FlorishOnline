@@ -26,27 +26,34 @@ export default function DashboardLayout({
   };
 
   useEffect(() => {
-    // First, handle unauthenticated users.
-    if (!loading && !user) {
+    // If auth state is still loading, do nothing yet.
+    if (loading) {
+      return;
+    }
+
+    // If loading is finished and there's no user, redirect to auth page.
+    if (!user) {
       const redirectPath = window.location.pathname;
       router.replace(`/auth?redirect=${redirectPath || "/dashboard"}`);
       return;
     }
 
-    // Once the user is loaded, handle role-based redirection.
-    if (!loading && user) {
-      const expectedBasePath = roleBasePaths[user.role];
-      // If the user is on a path that doesn't match their role's base path,
-      // or if they land on the generic '/dashboard' page, redirect them.
-      if (!pathname.startsWith(expectedBasePath)) {
-        router.replace(expectedBasePath);
-      }
+    // If loading is finished and we have a user, but the role isn't populated yet,
+    // wait for the role to be fetched. This is the key fix for the race condition.
+    if (!user.role) {
+        return;
+    }
+
+    // Now we know we have a user with a role. Perform the redirection if necessary.
+    const expectedBasePath = roleBasePaths[user.role];
+    if (!pathname.startsWith(expectedBasePath)) {
+      router.replace(expectedBasePath);
     }
   }, [user, loading, router, pathname]);
 
-  // While loading or if the user object isn't available yet, show a full-screen loader.
-  // This is the primary gatekeeper.
-  if (loading || !user) {
+  // The Gatekeeper: Show a full-screen loader if auth is still processing
+  // OR if the user object is present but doesn't have a role yet.
+  if (loading || !user?.role) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -54,9 +61,9 @@ export default function DashboardLayout({
     );
   }
   
+  // This is a secondary check for the brief moment between the useEffect hook firing
+  // the redirect and the page actually changing. It prevents a flash of incorrect content.
   const expectedBasePath = roleBasePaths[user.role];
-  // If the user is loaded but we are about to redirect, show a loader
-  // to prevent a flash of the incorrect dashboard content.
   if (!pathname.startsWith(expectedBasePath)) {
      return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -65,8 +72,7 @@ export default function DashboardLayout({
     );
   }
 
-  // If we've passed all checks, the user is authenticated and on the correct path.
-  // Render the dashboard.
+  // If we've passed all checks, render the dashboard.
   return (
     <SidebarProvider>
       <DashboardSidebar role={user.role} />
