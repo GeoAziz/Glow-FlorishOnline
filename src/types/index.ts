@@ -104,3 +104,9 @@ export type AdminOrder = Order & {
         email: string | null;
     }
 };
+
+export type Testimonial = {
+    name: string;
+    text: string;
+    rating: number;
+};

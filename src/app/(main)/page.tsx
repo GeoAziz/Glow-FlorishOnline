@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { getProducts } from "@/lib/data";
+import { getProducts, getTestimonials } from "@/lib/data";
 import { ArrowRight, Star } from "lucide-react";
 import { ProductCard } from "./shop/components/product-card";
 import { NewsletterForm } from "@/components/newsletter-form";
@@ -10,24 +10,7 @@ import { NewsletterForm } from "@/components/newsletter-form";
 export default async function Home() {
   const allProducts = await getProducts();
   const featuredProducts = allProducts.slice(0, 4);
-
-  const testimonials = [
-    {
-      name: "Jessica L.",
-      text: "The Radiant Glow Serum has completely transformed my skin. I've never felt more confident!",
-      rating: 5,
-    },
-    {
-      name: "Sarah K.",
-      text: "I'm in love with the minimalist packaging and the quality of the products. The hair mask is a must-try.",
-      rating: 5,
-    },
-    {
-      name: "Emily R.",
-      text: "Glow & Flourish is my new go-to for all things beauty and wellness. Their commitment to clean ingredients is amazing.",
-      rating: 5,
-    },
-  ];
+  const testimonials = await getTestimonials();
 
   return (
     <div className="flex flex-col">
