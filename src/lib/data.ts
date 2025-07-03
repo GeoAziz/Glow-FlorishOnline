@@ -3,6 +3,7 @@ import { adminDb } from './firebase/admin';
 import type { Product, BlogPost, Review, PendingReview, Order } from "@/types";
 import type { Query, DocumentSnapshot } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
+import { format } from 'date-fns';
 
 // This data is now used for seeding the database only.
 // See scripts/seed-db.ts
@@ -337,19 +338,24 @@ export async function getPendingReviews(): Promise<PendingReview[]> {
 
     productsSnapshot.docs.forEach(doc => {
       const product = convertDocToProduct(doc);
-      const pendingReviews = product.reviews.filter(r => r.status === 'pending');
+      if (product.reviews && product.reviews.length > 0) {
+        const pendingReviews = product.reviews.filter(r => r.status === 'pending');
 
-      if (pendingReviews.length > 0) {
-        pendingReviews.forEach(review => {
-          allPendingReviews.push({
-            ...review,
-            productId: product.id,
-            productSlug: product.slug,
-            productName: product.name,
+        if (pendingReviews.length > 0) {
+          pendingReviews.forEach(review => {
+            allPendingReviews.push({
+              ...review,
+              productId: product.id,
+              productSlug: product.slug,
+              productName: product.name,
+            });
           });
-        });
+        }
       }
     });
+
+    // Sort reviews by date, newest first
+    allPendingReviews.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     return allPendingReviews;
   } catch (error) {
@@ -408,5 +414,36 @@ export async function getAdminDashboardStats() {
             totalUsers: 0,
             recentOrders: [] as Order[]
         };
+    }
+}
+
+export async function getAnalyticsData() {
+    try {
+        const ordersSnapshot = await adminDb.collection('orders').orderBy('createdAt', 'asc').get();
+
+        if (ordersSnapshot.empty) {
+            return { monthlyRevenue: [] };
+        }
+
+        const monthlyRevenueMap = new Map<string, number>();
+
+        ordersSnapshot.docs.forEach(doc => {
+            const order = doc.data() as Omit<Order, 'id' | 'createdAt'> & { createdAt: { toDate: () => Date } };
+            const date = order.createdAt.toDate();
+            const monthKey = format(date, 'MMM yy'); // e.g., "Jan 24"
+            
+            const currentRevenue = monthlyRevenueMap.get(monthKey) || 0;
+            monthlyRevenueMap.set(monthKey, currentRevenue + order.total);
+        });
+
+        const monthlyRevenue = Array.from(monthlyRevenueMap.entries()).map(([month, revenue]) => ({
+            month,
+            revenue,
+        }));
+
+        return { monthlyRevenue };
+    } catch (error) {
+        console.error('Error fetching analytics data:', error);
+        return { monthlyRevenue: [] };
     }
 }
