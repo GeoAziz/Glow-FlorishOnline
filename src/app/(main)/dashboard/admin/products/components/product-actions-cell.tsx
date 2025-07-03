@@ -3,6 +3,7 @@
 
 import { useState, useTransition } from "react";
 import { MoreHorizontal, Loader2, Trash2, Pencil } from "lucide-react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -85,9 +86,11 @@ export function ProductActionsCell({ productId }: ProductActionsCellProps) {
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem disabled>
+          <DropdownMenuItem asChild>
+            <Link href={`/dashboard/admin/products/edit/${productId}`}>
              <Pencil className="mr-2 h-4 w-4" />
             Edit
+            </Link>
           </DropdownMenuItem>
           <DropdownMenuItem
             className="text-destructive focus:text-destructive focus:bg-destructive/10"

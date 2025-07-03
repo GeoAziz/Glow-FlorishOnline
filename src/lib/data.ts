@@ -199,6 +199,27 @@ export async function getProducts(
   }
 }
 
+export async function getProductById(id: string): Promise<Product | null> {
+  if (!id) {
+    return null;
+  }
+  try {
+    const doc = await adminDb.collection('products').doc(id).get();
+
+    if (!doc.exists) {
+      return null;
+    }
+
+    return {
+      id: doc.id,
+      ...doc.data()
+    } as Product;
+  } catch (error) {
+    console.error(`Error fetching product by id ${id}:`, error);
+    return null;
+  }
+}
+
 export async function getProductBySlug(slug: string): Promise<Product | null> {
   try {
     const productsRef = adminDb.collection('products');
