@@ -20,6 +20,7 @@ async function seedDatabase() {
       
       const productWithTimestamps = {
         ...productData,
+        createdAt: new Date(),
         reviews: productData.reviews.map(review => ({
           ...review,
           id: randomUUID(), // Assign a random ID to each review

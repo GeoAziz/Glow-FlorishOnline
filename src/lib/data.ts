@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 
 // This data is now used for seeding the database only.
 // See scripts/seed-db.ts
-export const initialProducts: (Omit<Product, 'reviews'> & { reviews: Omit<Review, 'createdAt' | 'id'>[] })[] = [
+export const initialProducts: (Omit<Product, 'reviews' | 'createdAt'> & { reviews: Omit<Review, 'createdAt' | 'id'>[] })[] = [
   {
     id: "1",
     slug: "radiant-glow-serum",
@@ -177,6 +177,10 @@ function convertDocToProduct(doc: DocumentSnapshot): Product {
             return newReview;
         });
     }
+
+    if (data.createdAt && typeof data.createdAt.toDate === 'function') {
+        data.createdAt = data.createdAt.toDate();
+    }
     
     return {
         id: doc.id,
@@ -185,11 +189,17 @@ function convertDocToProduct(doc: DocumentSnapshot): Product {
 }
 
 
-export async function getProducts(
-  category?: string,
-  minPrice?: number,
-  maxPrice?: number
-): Promise<Product[]> {
+export async function getProducts({
+    searchQuery,
+    category,
+    minPrice,
+    maxPrice
+}: {
+    searchQuery?: string;
+    category?: string;
+    minPrice?: number;
+    maxPrice?: number;
+} = {}): Promise<Product[]> {
   try {
     let query: Query = adminDb.collection('products');
 
@@ -197,6 +207,8 @@ export async function getProducts(
       query = query.where('category', '==', category);
     }
     
+    // We fetch all products (or by category) and then filter by search and price in code
+    // This is less efficient for huge datasets but avoids complex Firestore indexing
     const snapshot = await query.orderBy('name').get();
     
     if (snapshot.empty) {
@@ -204,6 +216,14 @@ export async function getProducts(
     }
 
     let products = snapshot.docs.map(convertDocToProduct);
+    
+    if (searchQuery) {
+        const lowercasedQuery = searchQuery.toLowerCase();
+        products = products.filter(p =>
+            p.name.toLowerCase().includes(lowercasedQuery) ||
+            p.description.toLowerCase().includes(lowercasedQuery)
+        );
+    }
     
     if (minPrice !== undefined) {
       products = products.filter(p => p.price >= minPrice);

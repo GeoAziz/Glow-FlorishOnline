@@ -1,9 +1,11 @@
+
 "use client";
 
 import { useState, useMemo } from "react";
 import type { Product } from "@/types";
 import { ProductCard } from "./product-card";
 import { Filters } from "./filters";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ShopClientProps {
   products: Product[];
@@ -14,6 +16,7 @@ interface ShopClientProps {
 export function ShopClient({ products, categories, priceRange: initialPriceRange }: ShopClientProps) {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<number[]>([0, initialPriceRange[1]]);
+  const [sortOrder, setSortOrder] = useState('newest');
 
   const handleCategoryChange = (categoryId: string, checked: boolean) => {
     setSelectedCategories((prev) =>
@@ -21,8 +24,8 @@ export function ShopClient({ products, categories, priceRange: initialPriceRange
     );
   };
 
-  const filteredProducts = useMemo(() => {
-    return products.filter((product) => {
+  const filteredAndSortedProducts = useMemo(() => {
+    let filtered = products.filter((product) => {
       const categoryMatch =
         selectedCategories.length === 0 ||
         selectedCategories.includes(product.category);
@@ -30,7 +33,23 @@ export function ShopClient({ products, categories, priceRange: initialPriceRange
         product.price >= priceRange[0] && product.price <= priceRange[1];
       return categoryMatch && priceMatch;
     });
-  }, [products, selectedCategories, priceRange]);
+
+    switch (sortOrder) {
+        case 'price-asc':
+            filtered.sort((a, b) => a.price - b.price);
+            break;
+        case 'price-desc':
+            filtered.sort((a, b) => b.price - a.price);
+            break;
+        case 'newest':
+        default:
+            filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            break;
+    }
+
+    return filtered;
+
+  }, [products, selectedCategories, priceRange, sortOrder]);
 
   return (
     <div className="flex flex-col lg:flex-row gap-12">
@@ -43,9 +62,21 @@ export function ShopClient({ products, categories, priceRange: initialPriceRange
         maxPrice={initialPriceRange[1]}
       />
       <main className="flex-1">
-        {filteredProducts.length > 0 ? (
+         <div className="flex justify-end mb-8">
+            <Select value={sortOrder} onValueChange={setSortOrder}>
+                <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="newest">Newest</SelectItem>
+                    <SelectItem value="price-asc">Price: Low to High</SelectItem>
+                    <SelectItem value="price-desc">Price: High to Low</SelectItem>
+                </SelectContent>
+            </Select>
+        </div>
+        {filteredAndSortedProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredProducts.map((product) => (
+            {filteredAndSortedProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>

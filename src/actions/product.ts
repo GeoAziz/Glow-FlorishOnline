@@ -6,12 +6,13 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import type { Product } from '@/types';
 import type { ProductFormValues } from '@/lib/schemas/product';
+import { FieldValue } from 'firebase-admin/firestore';
 
 export async function createProduct(data: ProductFormValues) {
     try {
         // Since productFormSchema includes fields not in the Product type (like the string version of images),
         // we create a new object that conforms to Omit<Product, 'id' | 'reviews'>
-        const newProduct: Omit<Product, 'id' | 'reviews'> = {
+        const newProduct: Omit<Product, 'id' | 'reviews' | 'createdAt'> = {
             name: data.name,
             slug: data.slug,
             description: data.description,
@@ -25,7 +26,10 @@ export async function createProduct(data: ProductFormValues) {
             reviews: [], // New products have no reviews
         };
 
-        await adminDb.collection('products').add(newProduct);
+        await adminDb.collection('products').add({
+            ...newProduct,
+            createdAt: FieldValue.serverTimestamp(),
+        });
 
     } catch (error) {
         console.error('Error creating product:', error);

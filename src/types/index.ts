@@ -42,6 +42,7 @@ export type Product = {
   tags?: string[];
   reviews: Review[];
   stock: number;
+  createdAt: Date;
 };
 
 export type BlogPost = {

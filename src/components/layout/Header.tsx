@@ -1,11 +1,14 @@
+
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Menu, ShoppingCart } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import React from "react";
+import { Menu, ShoppingCart, Search } from "lucide-react";
 
 import Logo from "@/components/shared/Logo";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/hooks/use-cart";
@@ -20,6 +23,7 @@ const navLinks = [
 
 export default function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const { itemCount } = useCart();
 
   const NavLink = ({
@@ -41,6 +45,14 @@ export default function Header() {
         {children}
       </Link>
     );
+  };
+  
+  const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const searchQuery = formData.get("search") as string;
+    if (!searchQuery?.trim()) return;
+    router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
   };
 
   return (
@@ -75,7 +87,7 @@ export default function Header() {
           </Sheet>
         </div>
 
-        <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+        <div className="flex flex-1 items-center justify-end space-x-2 md:space-x-4">
           <nav className="hidden md:flex gap-6 items-center">
             {navLinks.map((link) => (
               <NavLink key={link.href} href={link.href}>
@@ -85,6 +97,14 @@ export default function Header() {
           </nav>
 
           <div className="flex items-center gap-4">
+            <form onSubmit={handleSearchSubmit} className="relative hidden lg:block">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                name="search"
+                placeholder="Search products..."
+                className="h-9 w-full rounded-md pl-9 md:w-[200px] lg:w-[300px]"
+              />
+            </form>
             <UserNav />
             <Button asChild variant="ghost" size="icon" aria-label="Shopping Cart">
               <Link href="/cart" className="relative">
