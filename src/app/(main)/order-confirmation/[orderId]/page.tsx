@@ -1,11 +1,13 @@
+
 import { getOrder } from "@/actions/order";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { CheckCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface OrderConfirmationPageProps {
   params: {
@@ -32,7 +34,7 @@ export default async function OrderConfirmationPage({ params }: OrderConfirmatio
             <p className="text-sm text-muted-foreground mt-1">Order ID: {order.id}</p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid md:grid-cols-2 gap-8 mb-8">
             {/* Order Summary */}
             <Card>
                 <CardHeader>
@@ -71,6 +73,23 @@ export default async function OrderConfirmationPage({ params }: OrderConfirmatio
                 </CardContent>
             </Card>
         </div>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Order & Payment Status</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-2 gap-4">
+            <div>
+              <CardDescription>Order Status</CardDescription>
+              <Badge className="capitalize mt-1" variant={order.status === 'delivered' ? 'default' : 'secondary'}>{order.status}</Badge>
+            </div>
+             <div>
+              <CardDescription>Payment Status</CardDescription>
+              <Badge className="capitalize mt-1" variant={order.paymentStatus === 'paid' ? 'default' : 'secondary'}>{order.paymentStatus}</Badge>
+               <p className="text-xs text-muted-foreground mt-1 capitalize">via {order.paymentMethod}</p>
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="mt-12 text-center">
             <Button asChild>

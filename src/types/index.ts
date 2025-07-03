@@ -81,6 +81,8 @@ export type OrderItem = {
   image: string;
 };
 
+export type PaymentMethod = 'paypal' | 'delivery';
+
 export type Order = {
     id: string;
     userId: string;
@@ -88,6 +90,11 @@ export type Order = {
     total: number;
     shippingAddress: ShippingAddress;
     status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+    paymentMethod: PaymentMethod;
+    paymentStatus: 'paid' | 'unpaid';
+    paymentDetails?: {
+      paypalOrderId?: string;
+    };
     createdAt: Date;
 };
 

@@ -11,7 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { OrderActionsCell } from "./components/order-actions-cell";
-import { ClipboardList } from "lucide-react";
+import { ClipboardList, DollarSign } from "lucide-react";
 
 export default async function AdminOrdersPage() {
   const orders = await getOrders();
@@ -27,6 +27,10 @@ export default async function AdminOrdersPage() {
     }
   }
 
+  const getPaymentStatusVariant = (status: string) => {
+    return status === 'paid' ? 'default' : 'secondary';
+  }
+
   return (
     <div>
       <h1 className="text-4xl font-bold font-headline mb-2">Manage Orders</h1>
@@ -40,7 +44,8 @@ export default async function AdminOrdersPage() {
               <TableHead>Order ID</TableHead>
               <TableHead>Customer</TableHead>
               <TableHead>Date</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>Order Status</TableHead>
+              <TableHead>Payment</TableHead>
               <TableHead className="text-right">Total</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -60,6 +65,14 @@ export default async function AdminOrdersPage() {
                   <Badge variant={getStatusVariant(order.status)} className="capitalize">
                     {order.status}
                   </Badge>
+                </TableCell>
+                <TableCell>
+                    <div className="flex flex-col">
+                        <Badge variant={getPaymentStatusVariant(order.paymentStatus)} className="capitalize w-fit">
+                            {order.paymentStatus}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground capitalize">{order.paymentMethod}</span>
+                    </div>
                 </TableCell>
                 <TableCell className="font-medium text-right">${order.total.toFixed(2)}</TableCell>
                 <TableCell className="text-right">

@@ -4,7 +4,7 @@
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { revalidatePath } from 'next/cache';
-import type { Order, OrderItem, ShippingAddress, AdminOrder } from '@/types';
+import type { Order, OrderItem, ShippingAddress, PaymentMethod } from '@/types';
 import { getAuth } from 'firebase-admin/auth';
 
 interface CreateOrderArgs {
@@ -12,10 +12,14 @@ interface CreateOrderArgs {
   items: OrderItem[];
   total: number;
   shippingAddress: ShippingAddress;
+  paymentMethod: PaymentMethod;
+  paymentDetails?: {
+    paypalOrderId?: string;
+  };
 }
 
-export async function createOrder({ userId, items, total, shippingAddress }: CreateOrderArgs) {
-  if (!userId || !items || items.length === 0 || !shippingAddress) {
+export async function createOrder({ userId, items, total, shippingAddress, paymentMethod, paymentDetails }: CreateOrderArgs) {
+  if (!userId || !items || items.length === 0 || !shippingAddress || !paymentMethod) {
     return { error: 'Missing required order information.' };
   }
 
@@ -28,6 +32,9 @@ export async function createOrder({ userId, items, total, shippingAddress }: Cre
       total,
       shippingAddress,
       status: 'pending',
+      paymentMethod,
+      paymentStatus: paymentMethod === 'paypal' ? 'paid' : 'unpaid',
+      paymentDetails: paymentDetails || {},
       createdAt: FieldValue.serverTimestamp() as any, // Firestore handles the timestamp
     };
 
