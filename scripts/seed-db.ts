@@ -2,7 +2,7 @@
 // To run this script, use: tsx ./scripts/seed-db.ts
 
 import { adminDb } from '../src/lib/firebase/admin';
-import { initialProducts, initialBlogPosts, blogPostContent } from '../src/lib/data';
+import { initialProducts, initialBlogPosts, blogPostContent, initialOrders } from '../src/lib/data';
 import { FieldValue } from 'firebase-admin/firestore';
 import { randomUUID } from 'crypto';
 
@@ -66,6 +66,26 @@ async function seedDatabase() {
 
     await blogBatch.commit();
     console.log('✅ Blog posts seeded successfully.');
+
+    // Seed Orders
+    const ordersCollection = adminDb.collection('orders');
+    const ordersBatch = adminDb.batch();
+
+    console.log(`Adding ${initialOrders.length} sample orders...`);
+    initialOrders.forEach(orderData => {
+      // For orders, we'll let Firestore generate the ID
+      const docRef = ordersCollection.doc(); 
+      
+      const orderWithTimestamp = {
+        ...orderData,
+        createdAt: FieldValue.serverTimestamp(),
+      };
+      
+      ordersBatch.set(docRef, orderWithTimestamp);
+    });
+
+    await ordersBatch.commit();
+    console.log('✅ Orders seeded successfully.');
 
 
     console.log('Database seeding complete!');
