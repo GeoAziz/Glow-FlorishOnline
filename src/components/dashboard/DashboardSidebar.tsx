@@ -25,7 +25,8 @@ import {
     Settings,
     LifeBuoy,
     ShoppingBag,
-    Heart
+    Heart,
+    Package
 } from "lucide-react";
 
 type NavItem = {
@@ -47,6 +48,7 @@ const navItemsByRole: Record<UserRole, NavItem[]> = {
   admin: [
     { href: "/dashboard/admin", label: "Overview", icon: Home },
     { href: "/dashboard/admin/users", label: "Manage Users", icon: Users },
+    { href: "/dashboard/admin/products", label: "Manage Products", icon: Package },
     { href: "/dashboard/admin/analytics", label: "Analytics", icon: BarChart3 },
   ],
 };
