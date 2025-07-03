@@ -15,18 +15,24 @@ interface CreateUserDocumentArgs {
 
 export async function createUserDocument({ uid, email, name }: CreateUserDocumentArgs) {
   try {
-    const userRef = adminDb.collection('users').doc(uid);
+    const usersCollection = adminDb.collection('users');
+    const userRef = usersCollection.doc(uid);
     
     const userDoc = await userRef.get();
     if (userDoc.exists) {
         return { success: true, message: 'User document already exists.' };
     }
 
+    // Check if the users collection is empty.
+    const collectionSnapshot = await usersCollection.limit(1).get();
+    const isFirstUser = collectionSnapshot.empty;
+
     await userRef.set({
       uid,
       email,
       displayName: name || email?.split('@')[0] || 'New User',
-      role: 'user' as UserRole,
+      // If it's the first user, make them an admin. Otherwise, a regular user.
+      role: isFirstUser ? 'admin' : ('user' as UserRole),
       createdAt: new Date().toISOString(),
     });
 
