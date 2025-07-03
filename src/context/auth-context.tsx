@@ -1,3 +1,4 @@
+
 "use client";
 
 import { createContext, useState, useEffect, type ReactNode } from "react";
@@ -19,46 +20,53 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     let unsubscribeFirestore: (() => void) | undefined;
-    
+
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
+      // If a user logs out, unsubscribe from any existing Firestore listener
       if (unsubscribeFirestore) {
         unsubscribeFirestore();
       }
 
       if (firebaseUser) {
-        // Keep loading true, do not set a partial user object yet.
-        setLoading(true); 
+        // User is logged in, start loading their Firestore data
+        setLoading(true);
         const userDocRef = doc(db, "users", firebaseUser.uid);
-        
-        unsubscribeFirestore = onSnapshot(userDocRef, (doc) => {
-            if (doc.exists()) {
-                // Doc exists, now we can build the complete user object
-                const { role, ...rest } = doc.data();
-                setUser({
-                    ...firebaseUser,
-                    role: role || 'user', // Default to 'user' if role is missing in doc
-                    ...rest
-                } as AppUser);
-                setLoading(false); // ONLY now is loading complete.
+
+        unsubscribeFirestore = onSnapshot(
+          userDocRef,
+          (docSnapshot) => {
+            if (docSnapshot.exists()) {
+              // User document exists, we have the role.
+              const userData = docSnapshot.data();
+              setUser({
+                ...(firebaseUser as AppUser), // Base user info from auth
+                ...userData,                 // Add custom fields from Firestore
+                role: userData.role || 'user', // Ensure role is set
+              });
             } else {
-                // Doc doesn't exist yet (e.g., right after signup). 
-                // We stay in a loading state and wait for the doc to be created.
-                // Do not set user or set loading to false.
+              // This can happen briefly after signup before the user doc is created.
+              // We create a temporary user object without a role. The listener will
+              // fire again once the document is created.
+              setUser({ ...firebaseUser, role: 'user' } as AppUser);
             }
-        }, (error) => {
-            console.error("Error listening to user document:", error);
+            // Finished loading user data
+            setLoading(false);
+          },
+          (error) => {
+            console.error("Error fetching user document:", error);
             // On error, create a fallback user to unblock the UI.
             setUser({ ...firebaseUser, role: 'user' } as AppUser);
             setLoading(false);
-        });
-
+          }
+        );
       } else {
-        // User is logged out, not loading anymore.
+        // User is logged out
         setUser(null);
         setLoading(false);
       }
     });
 
+    // Cleanup function
     return () => {
       unsubscribeAuth();
       if (unsubscribeFirestore) {
@@ -66,7 +74,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     };
   }, []);
-
 
   return (
     <AuthContext.Provider value={{ user, loading }}>
