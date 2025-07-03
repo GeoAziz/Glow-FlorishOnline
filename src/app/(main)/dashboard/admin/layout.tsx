@@ -15,15 +15,19 @@ export default function AdminLayout({
   const router = useRouter();
 
   useEffect(() => {
+    // The main DashboardLayout already handles the core auth check.
+    // This is a secondary check to ensure the user has the correct role.
     if (!loading && user?.role !== "admin") {
       router.replace("/unauthorized");
     }
   }, [user, loading, router]);
 
+  // Show a spinner if the role check is pending or if the user is not an admin.
+  // This prevents rendering the admin content incorrectly while the redirect happens.
   if (loading || user?.role !== "admin") {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <Loader2 className="h-16 w-16 animate-spin text-primary" />
+      <div className="flex h-full w-full items-center justify-center p-16">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }

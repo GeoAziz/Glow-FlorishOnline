@@ -1,13 +1,28 @@
 
-import { auth as serverAuth } from "@/lib/firebase/server";
-import { redirect } from "next/navigation";
+'use client';
+
+import { useAuth } from '@/hooks/use-auth';
 import { ProfileForm } from "./components/profile-form";
 import { AppUser } from "@/types";
+import { Loader2 } from 'lucide-react';
 
-export default async function ProfilePage() {
-    const user = await serverAuth.getCurrentUser();
+export default function ProfilePage() {
+    const { user, loading } = useAuth();
+    
+    // The main DashboardLayout handles the primary loading/auth check,
+    // but this provides a fallback while the user context is loading.
+    if (loading) {
+        return (
+          <div className="flex h-full w-full items-center justify-center p-16">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          </div>
+        );
+    }
+
     if (!user) {
-        redirect('/auth?redirect=/dashboard/user/profile');
+        // This case should not be hit due to DashboardLayout's gatekeeping,
+        // but it's a good practice to have a fallback.
+        return <p>Please log in to view your profile.</p>;
     }
 
     return (

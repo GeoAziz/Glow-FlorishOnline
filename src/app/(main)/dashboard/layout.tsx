@@ -18,11 +18,17 @@ export default function DashboardLayout({
   const router = useRouter();
 
   useEffect(() => {
+    // If loading is finished and there is no user, redirect to the login page.
+    // The current path is passed as a redirect parameter.
     if (!loading && !user) {
-      router.replace("/auth?redirect=/dashboard");
+      const redirectPath = window.location.pathname;
+      router.replace(`/auth?redirect=${redirectPath || '/dashboard'}`);
     }
   }, [user, loading, router]);
 
+  // This is the gatekeeper. It shows a full-screen loader while authentication is in progress.
+  // No child components (including specific dashboard pages) will render until the user's
+  // authentication status is fully resolved.
   if (loading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -31,6 +37,7 @@ export default function DashboardLayout({
     );
   }
 
+  // Once the user is authenticated and loaded, render the dashboard structure.
   return (
     <SidebarProvider>
       <DashboardSidebar role={user.role} />

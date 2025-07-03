@@ -1,23 +1,46 @@
 
-import { getWishlist } from "@/actions/wishlist";
-import { getProductsByIds } from "@/lib/data";
-import { auth } from "@/lib/firebase/server";
-import { redirect } from "next/navigation";
-import Link from "next/link";
-import { Heart } from "lucide-react";
+'use client';
 
-import { ProductCard } from "@/app/(main)/shop/components/product-card";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useAuth } from '@/hooks/use-auth';
+import { getWishlist } from '@/actions/wishlist';
+import { getProductsByIds } from '@/lib/data';
+import type { Product } from '@/types';
 
-export default async function WishlistPage() {
-  const user = await auth.getCurrentUser();
+import { ProductCard } from '@/app/(main)/shop/components/product-card';
+import { Button } from '@/components/ui/button';
+import { Heart, Loader2 } from 'lucide-react';
 
-  if (!user) {
-    redirect("/auth?redirect=/dashboard/user/wishlist");
+export default function WishlistPage() {
+  const { user } = useAuth();
+  const [wishlistProducts, setWishlistProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      const fetchWishlistProducts = async () => {
+        setLoading(true);
+        const productIds = await getWishlist(user.uid);
+        if (productIds.length > 0) {
+          const products = await getProductsByIds(productIds);
+          setWishlistProducts(products);
+        }
+        setLoading(false);
+      };
+      fetchWishlistProducts();
+    } else {
+        setLoading(false);
+    }
+  }, [user]);
+
+  if (loading) {
+    return (
+      <div className="flex w-full items-center justify-center p-16">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
   }
-
-  const wishlistProductIds = await getWishlist(user.uid);
-  const wishlistProducts = await getProductsByIds(wishlistProductIds);
 
   return (
     <div>
