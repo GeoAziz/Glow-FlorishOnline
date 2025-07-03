@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from "next/image";
@@ -5,12 +6,20 @@ import Link from "next/link";
 import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, Loader2 } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
 export function CartClient() {
-  const { cart, updateQuantity, removeFromCart, cartTotal, itemCount } = useCart();
+  const { cart, updateQuantity, removeFromCart, cartTotal, itemCount, loading } = useCart();
+
+  if (loading) {
+    return (
+        <div className="flex items-center justify-center py-16">
+            <Loader2 className="h-16 w-16 animate-spin text-primary" />
+        </div>
+    );
+  }
 
   if (itemCount === 0) {
     return (
