@@ -14,6 +14,15 @@ export interface AdminAppUser extends UserRecord {
 
 export type User = AppUser;
 
+export type Review = {
+  id: string;
+  rating: number;
+  text: string;
+  author: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: Date;
+};
+
 export type Product = {
   id: string;
   slug: string;
@@ -25,11 +34,7 @@ export type Product = {
   images: string[];
   category: "Skin" | "Hair" | "Wellness" | "Makeup";
   tags?: string[];
-  reviews: {
-    rating: number;
-    text: string;
-    author: string;
-  }[];
+  reviews: Review[];
   stock: number;
 };
 

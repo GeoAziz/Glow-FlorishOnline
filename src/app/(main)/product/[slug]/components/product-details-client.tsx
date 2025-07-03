@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -50,8 +51,10 @@ export function ProductDetailsClient({ product }: ProductDetailsClientProps) {
     }
   };
   
-  const averageRating = product.reviews.length > 0 
-    ? product.reviews.reduce((acc, review) => acc + review.rating, 0) / product.reviews.length
+  const approvedReviews = product.reviews.filter(review => review.status === 'approved');
+
+  const averageRating = approvedReviews.length > 0 
+    ? approvedReviews.reduce((acc, review) => acc + review.rating, 0) / approvedReviews.length
     : 0;
   
   const isWishlisted = isInWishlist(product.id);
@@ -97,7 +100,7 @@ export function ProductDetailsClient({ product }: ProductDetailsClientProps) {
             <div className="flex items-center gap-1">
                 <Star className="w-5 h-5 text-primary fill-primary" />
                 <span className="font-bold">{averageRating.toFixed(1)}</span>
-                <span className="text-sm text-muted-foreground">({product.reviews.length} reviews)</span>
+                <span className="text-sm text-muted-foreground">({approvedReviews.length} reviews)</span>
             </div>
             <Separator orientation="vertical" className="h-4" />
             <span className={`text-sm font-semibold ${product.stock > 0 ? 'text-green-600' : 'text-destructive'}`}>
@@ -142,13 +145,13 @@ export function ProductDetailsClient({ product }: ProductDetailsClientProps) {
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="reviews">
-            <AccordionTrigger>Reviews ({product.reviews.length})</AccordionTrigger>
+            <AccordionTrigger>Reviews ({approvedReviews.length})</AccordionTrigger>
             <AccordionContent>
               <div className="space-y-6">
-                {product.reviews.length > 0 ? (
+                {approvedReviews.length > 0 ? (
                   <div className="space-y-4">
-                    {product.reviews.map((review, index) => (
-                      <div key={index} className="border-b pb-4 last:border-none">
+                    {approvedReviews.map((review) => (
+                      <div key={review.id} className="border-b pb-4 last:border-none">
                         <div className="flex items-center mb-1">
                             {[...Array(review.rating)].map((_, i) => (
                                 <Star key={i} className="h-4 w-4 text-primary fill-primary" />

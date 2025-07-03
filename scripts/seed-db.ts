@@ -1,8 +1,10 @@
+
 // To run this script, use: tsx ./scripts/seed-db.ts
 
 import { adminDb } from '../src/lib/firebase/admin';
 import { initialProducts, initialBlogPosts, blogPostContent } from '../src/lib/data';
 import { FieldValue } from 'firebase-admin/firestore';
+import { randomUUID } from 'crypto';
 
 async function seedDatabase() {
   console.log('Seeding database...');
@@ -13,10 +15,19 @@ async function seedDatabase() {
     const productsBatch = adminDb.batch();
 
     console.log(`Adding ${initialProducts.length} products...`);
-    initialProducts.forEach(product => {
-      // Use the predefined ID from the data as the document ID
-      const docRef = productsCollection.doc(product.id);
-      productsBatch.set(docRef, product);
+    initialProducts.forEach(productData => {
+      const docRef = productsCollection.doc(productData.id);
+      
+      const productWithTimestamps = {
+        ...productData,
+        reviews: productData.reviews.map(review => ({
+          ...review,
+          id: randomUUID(), // Assign a random ID to each review
+          createdAt: new Date() // Add current date for seeded reviews
+        }))
+      };
+      
+      productsBatch.set(docRef, productWithTimestamps);
     });
 
     await productsBatch.commit();

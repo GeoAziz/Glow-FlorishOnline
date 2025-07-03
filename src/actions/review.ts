@@ -1,9 +1,11 @@
+
 'use server';
 
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { revalidatePath } from 'next/cache';
 import * as z from 'zod';
+import { randomUUID } from 'crypto';
 
 export const reviewFormSchema = z.object({
   productId: z.string(),
@@ -20,12 +22,12 @@ export async function submitReview(data: ReviewFormValues) {
         const productRef = adminDb.collection('products').doc(data.productId);
 
         const newReview = {
+            id: randomUUID(),
             rating: data.rating,
             text: data.text,
             author: data.author,
-            // In a real app, you might want to add a status for moderation
-            // status: 'pending', 
-            // createdAt: FieldValue.serverTimestamp()
+            status: 'pending', // Add status for moderation
+            createdAt: FieldValue.serverTimestamp(), // Add server timestamp
         };
 
         await productRef.update({
@@ -38,5 +40,5 @@ export async function submitReview(data: ReviewFormValues) {
     }
 
     revalidatePath(`/product/${data.slug}`);
-    return { success: true, message: "Thank you for your review!" };
+    return { success: true, message: "Thank you for your review! It will be visible after moderation." };
 }

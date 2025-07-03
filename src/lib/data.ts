@@ -1,11 +1,11 @@
 
 import { adminDb } from './firebase/admin';
-import type { Product, BlogPost } from "@/types";
-import type { Query } from 'firebase-admin/firestore';
+import type { Product, BlogPost, Review } from "@/types";
+import type { Query, DocumentSnapshot } from 'firebase-admin/firestore';
 
 // This data is now used for seeding the database only.
 // See scripts/seed-db.ts
-export const initialProducts: Product[] = [
+export const initialProducts: (Omit<Product, 'reviews'> & { reviews: Omit<Review, 'createdAt' | 'id'>[] })[] = [
   {
     id: "1",
     slug: "radiant-glow-serum",
@@ -18,8 +18,8 @@ export const initialProducts: Product[] = [
     category: "Skin",
     tags: ["Serum", "Hydration", "Brightening"],
     reviews: [
-      { rating: 5, text: "Absolutely amazing! My skin has never looked better.", author: "Chloe M." },
-      { rating: 5, text: "A holy grail product. Worth every penny.", author: "Isabella R." },
+      { rating: 5, text: "Absolutely amazing! My skin has never looked better.", author: "Chloe M.", status: 'approved' },
+      { rating: 5, text: "A holy grail product. Worth every penny.", author: "Isabella R.", status: 'approved' },
     ],
     stock: 25
   },
@@ -35,7 +35,7 @@ export const initialProducts: Product[] = [
     category: "Skin",
     tags: ["Cleanser", "Gentle", "Hydration"],
     reviews: [
-      { rating: 5, text: "So gentle on my sensitive skin. I love it.", author: "Sophia T." },
+      { rating: 5, text: "So gentle on my sensitive skin. I love it.", author: "Sophia T.", status: 'approved' },
     ],
     stock: 50
   },
@@ -65,7 +65,7 @@ export const initialProducts: Product[] = [
     category: "Makeup",
     tags: ["Foundation", "Medium Coverage", "Natural Finish"],
     reviews: [
-      { rating: 4, text: "Great coverage and feels light on the skin.", author: "Olivia P." },
+      { rating: 4, text: "Great coverage and feels light on the skin.", author: "Olivia P.", status: 'approved' },
     ],
     stock: 40
   },
@@ -81,7 +81,7 @@ export const initialProducts: Product[] = [
     category: "Wellness",
     tags: ["Tea", "Relaxation", "Organic"],
     reviews: [
-       { rating: 5, text: "The perfect way to end my day. So delicious and calming.", author: "Ava G." },
+       { rating: 5, text: "The perfect way to end my day. So delicious and calming.", author: "Ava G.", status: 'approved' },
     ],
     stock: 100
   },
@@ -111,7 +111,7 @@ export const initialProducts: Product[] = [
     category: "Hair",
     tags: ["Dry Shampoo", "Volume", "Styling"],
     reviews: [
-      { rating: 5, text: "Best dry shampoo I've ever used. No white cast!", author: "Mia L." },
+      { rating: 5, text: "Best dry shampoo I've ever used. No white cast!", author: "Mia L.", status: 'approved' },
     ],
     stock: 60
   },
@@ -127,8 +127,8 @@ export const initialProducts: Product[] = [
     category: "Makeup",
     tags: ["Lipstick", "Matte", "Long-wearing"],
     reviews: [
-      { rating: 5, text: "The color 'Rose Petal' is my perfect nude.", author: "Grace W." },
-      { rating: 4, text: "Very comfortable for a matte lipstick.", author: "Lily C." },
+      { rating: 5, text: "The color 'Rose Petal' is my perfect nude.", author: "Grace W.", status: 'approved' },
+      { rating: 4, text: "Very comfortable for a matte lipstick.", author: "Lily C.", status: 'approved' },
     ],
     stock: 80
   },
@@ -160,6 +160,28 @@ export const blogPostContent: {[key: string]: string} = {
   '5-self-care-rituals-to-boost-your-well-being': 'Self-care isn\'t selfish; it\'s essential for maintaining your mental, emotional, and physical health. Here are five simple yet powerful rituals to help you reconnect with yourself.\n\n**1. Mindful Mornings**\nInstead of grabbing your phone first thing, take five minutes to stretch, meditate, or simply enjoy a cup of tea in silence. Setting a calm tone for your day can have a profound impact on your stress levels.\n\n**2. The Weekly Unwind Bath**\nTransform your bathroom into a spa once a week. Add Epsom salts, essential oils, or a bath bomb to a warm bath. Light a candle, play some calming music, and let the stress of the week melt away.\n\n**3. Digital Detox Hour**\nDesignate one hour each day where you put all your devices away. Use this time to read a book, go for a walk, work on a hobby, or simply be present in your surroundings without digital distractions.\n\n**4. Nourish from Within**\nTake the time to prepare a truly nourishing meal for yourself. Focus on whole foods, vibrant colors, and flavors you love. Eating mindfully, without distractions, can turn a simple meal into a restorative experience.\n\n**5. Gratitude Journaling**\nBefore bed, write down three things you were grateful for that day. This simple practice can shift your focus from what\'s wrong to what\'s right, promoting a more positive outlook on life.',
 };
 
+function convertDocToProduct(doc: DocumentSnapshot): Product {
+    const data = doc.data();
+    if (!data) {
+        throw new Error("Document data is missing");
+    }
+    
+    if (data.reviews && Array.isArray(data.reviews)) {
+        data.reviews = data.reviews.map((review: any) => {
+            const newReview = { ...review };
+            if (review.createdAt && typeof review.createdAt.toDate === 'function') {
+                newReview.createdAt = review.createdAt.toDate();
+            }
+            return newReview;
+        });
+    }
+    
+    return {
+        id: doc.id,
+        ...data
+    } as Product;
+}
+
 
 export async function getProducts(
   category?: string,
@@ -179,12 +201,8 @@ export async function getProducts(
       return [];
     }
 
-    let products = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as Product[];
+    let products = snapshot.docs.map(convertDocToProduct);
     
-    // In-memory price filtering
     if (minPrice !== undefined) {
       products = products.filter(p => p.price >= minPrice);
     }
@@ -210,10 +228,7 @@ export async function getProductById(id: string): Promise<Product | null> {
       return null;
     }
 
-    return {
-      id: doc.id,
-      ...doc.data()
-    } as Product;
+    return convertDocToProduct(doc);
   } catch (error) {
     console.error(`Error fetching product by id ${id}:`, error);
     return null;
@@ -230,10 +245,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     }
 
     const doc = snapshot.docs[0];
-    return {
-      id: doc.id,
-      ...doc.data()
-    } as Product;
+    return convertDocToProduct(doc);
   } catch (error) {
     console.error(`Error fetching product by slug ${slug}:`, error);
     return null;
@@ -250,10 +262,7 @@ export async function getProductsByIds(ids: string[]): Promise<Product[]> {
 
     return productDocs
       .filter(doc => doc.exists)
-      .map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      } as Product));
+      .map(convertDocToProduct);
   } catch (error) {
     console.error("Error fetching products by IDs:", error);
     return [];
