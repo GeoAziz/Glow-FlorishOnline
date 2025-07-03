@@ -21,37 +21,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     let unsubscribeFirestore: (() => void) | undefined;
     
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
-      // Clean up the previous Firestore listener when the user changes
       if (unsubscribeFirestore) {
         unsubscribeFirestore();
       }
 
       if (firebaseUser) {
-        setLoading(true); // Always start loading when a user is detected
+        // Keep loading true, do not set a partial user object yet.
+        setLoading(true); 
         const userDocRef = doc(db, "users", firebaseUser.uid);
         
         unsubscribeFirestore = onSnapshot(userDocRef, (doc) => {
             if (doc.exists()) {
-                // If the document exists, we have the role. Update user and stop loading.
+                // Doc exists, now we can build the complete user object
                 const { role, ...rest } = doc.data();
                 setUser({
                     ...firebaseUser,
-                    role: role || 'user',
+                    role: role || 'user', // Default to 'user' if role is missing in doc
                     ...rest
                 } as AppUser);
-                setLoading(false);
+                setLoading(false); // ONLY now is loading complete.
+            } else {
+                // Doc doesn't exist yet (e.g., right after signup). 
+                // We stay in a loading state and wait for the doc to be created.
+                // Do not set user or set loading to false.
             }
-            // If doc doesn't exist, we do nothing and wait. `loading` remains true.
-            // onSnapshot will fire again once the document is created by the server action.
         }, (error) => {
             console.error("Error listening to user document:", error);
-            // On error, default to user role and stop loading as a fallback.
-            setUser({ ...firebaseUser, role: 'user' });
+            // On error, create a fallback user to unblock the UI.
+            setUser({ ...firebaseUser, role: 'user' } as AppUser);
             setLoading(false);
         });
 
       } else {
-        // User is logged out
+        // User is logged out, not loading anymore.
         setUser(null);
         setLoading(false);
       }
