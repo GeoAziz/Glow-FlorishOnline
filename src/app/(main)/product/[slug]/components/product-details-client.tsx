@@ -13,6 +13,7 @@ import { useWishlist } from "@/hooks/use-wishlist";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { ProductReviewForm } from "./product-review-form";
 
 interface ProductDetailsClientProps {
   product: Product;
@@ -143,23 +144,27 @@ export function ProductDetailsClient({ product }: ProductDetailsClientProps) {
           <AccordionItem value="reviews">
             <AccordionTrigger>Reviews ({product.reviews.length})</AccordionTrigger>
             <AccordionContent>
-              {product.reviews.length > 0 ? (
-                <div className="space-y-4">
-                  {product.reviews.map((review, index) => (
-                    <div key={index} className="border-b pb-4 last:border-none">
-                       <div className="flex items-center mb-1">
-                          {[...Array(review.rating)].map((_, i) => (
-                              <Star key={i} className="h-4 w-4 text-primary fill-primary" />
-                          ))}
+              <div className="space-y-6">
+                {product.reviews.length > 0 ? (
+                  <div className="space-y-4">
+                    {product.reviews.map((review, index) => (
+                      <div key={index} className="border-b pb-4 last:border-none">
+                        <div className="flex items-center mb-1">
+                            {[...Array(review.rating)].map((_, i) => (
+                                <Star key={i} className="h-4 w-4 text-primary fill-primary" />
+                            ))}
+                        </div>
+                        <p className="text-muted-foreground italic">"{review.text}"</p>
+                        <p className="text-sm font-semibold mt-2">- {review.author}</p>
                       </div>
-                      <p className="text-muted-foreground italic">"{review.text}"</p>
-                      <p className="text-sm font-semibold mt-2">- {review.author}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-muted-foreground">No reviews yet. Be the first to share your thoughts!</p>
-              )}
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">No reviews yet. Be the first to share your thoughts!</p>
+                )}
+
+                <ProductReviewForm productId={product.id} productSlug={product.slug} />
+              </div>
             </AccordionContent>
           </AccordionItem>
         </Accordion>
