@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, DollarSign, CreditCard, Activity } from "lucide-react";
+import { Users, DollarSign, CreditCard, MessageSquareWarning } from "lucide-react";
 
 interface StatsCardsProps {
     stats: {
@@ -8,6 +8,7 @@ interface StatsCardsProps {
         totalSales: number;
         totalUsers: number;
         newUsersThisMonth: number;
+        pendingReviewsCount: number;
     }
 }
 
@@ -52,13 +53,13 @@ export function StatsCards({ stats }: StatsCardsProps) {
             </Card>
              <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Coming Soon</CardTitle>
-                    <Activity className="h-4 w-4 text-muted-foreground" />
+                    <CardTitle className="text-sm font-medium">Pending Reviews</CardTitle>
+                    <MessageSquareWarning className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                     <p className="text-2xl font-bold">Analytics</p>
+                     <p className="text-2xl font-bold">{stats.pendingReviewsCount}</p>
                      <p className="text-xs text-muted-foreground">
-                        Deeper insights with charts and graphs.
+                        Items awaiting moderation.
                     </p>
                 </CardContent>
             </Card>

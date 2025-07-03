@@ -368,8 +368,13 @@ export async function getAdminDashboardStats() {
     try {
         const ordersPromise = adminDb.collection('orders').get();
         const usersPromise = getAuth().listUsers();
+        const pendingReviewsPromise = getPendingReviews();
 
-        const [ordersSnapshot, userRecords] = await Promise.all([ordersPromise, usersPromise]);
+        const [ordersSnapshot, userRecords, pendingReviews] = await Promise.all([
+            ordersPromise, 
+            usersPromise, 
+            pendingReviewsPromise
+        ]);
 
         // Calculate Revenue and Sales
         let totalRevenue = 0;
@@ -402,7 +407,8 @@ export async function getAdminDashboardStats() {
             totalSales,
             newUsersThisMonth,
             recentOrders,
-            totalUsers: userRecords.users.length
+            totalUsers: userRecords.users.length,
+            pendingReviewsCount: pendingReviews.length,
         };
 
     } catch (error) {
@@ -412,7 +418,8 @@ export async function getAdminDashboardStats() {
             totalSales: 0,
             newUsersThisMonth: 0,
             totalUsers: 0,
-            recentOrders: [] as Order[]
+            recentOrders: [] as Order[],
+            pendingReviewsCount: 0,
         };
     }
 }
