@@ -1,35 +1,14 @@
 
 "use client";
 
-import { useAuth } from "@/hooks/use-auth";
-import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
-import { useEffect } from "react";
+// This layout is now primarily for styling or structure specific to the moderator section.
+// The main role-based authentication and redirection is handled by the parent /dashboard/layout.tsx.
+// This prevents conflicting redirection logic and redirect loops.
 
 export default function ModeratorLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    // The main DashboardLayout handles the primary auth check.
-    // This ensures the user has the correct role for this section.
-    if (!loading && user?.role !== "moderator" && user?.role !== "admin") {
-      router.replace("/unauthorized");
-    }
-  }, [user, loading, router]);
-
-  // Show a spinner while the role check is pending or if the user does not have access.
-  if (loading || (user?.role !== "moderator" && user?.role !== "admin")) {
-    return (
-      <div className="flex h-full w-full items-center justify-center p-16">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   return <>{children}</>;
 }
