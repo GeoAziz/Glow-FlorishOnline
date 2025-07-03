@@ -28,7 +28,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (firebaseUser) {
-        // User is logged in, start loading their Firestore data
         setLoading(true);
         const userDocRef = doc(db, "users", firebaseUser.uid);
 
@@ -37,25 +36,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           (docSnapshot) => {
             if (docSnapshot.exists()) {
               // User document exists, we have the role.
+              // This is the definitive point where we can confirm the user's identity and role.
               const userData = docSnapshot.data();
               setUser({
                 ...(firebaseUser as AppUser), // Base user info from auth
                 ...userData,                 // Add custom fields from Firestore
                 role: userData.role || 'user', // Ensure role is set
               });
-            } else {
-              // This can happen briefly after signup before the user doc is created.
-              // We create a temporary user object without a role. The listener will
-              // fire again once the document is created.
-              setUser({ ...firebaseUser, role: 'user' } as AppUser);
+              setLoading(false); // Only stop loading once we have the role data.
             }
-            // Finished loading user data
-            setLoading(false);
+            // If the document doesn't exist yet (e.g., right after signup),
+            // we intentionally do nothing. We keep `loading` as `true` and wait for
+            // the `createUserDocument` action to complete, which will trigger this
+            // `onSnapshot` listener again with the created document.
           },
           (error) => {
             console.error("Error fetching user document:", error);
-            // On error, create a fallback user to unblock the UI.
-            setUser({ ...firebaseUser, role: 'user' } as AppUser);
+            // On error, log out the user to prevent an inconsistent state.
+            setUser(null);
             setLoading(false);
           }
         );
