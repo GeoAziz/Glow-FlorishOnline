@@ -41,6 +41,7 @@ const navItemsByRole: Record<UserRole, NavItem[]> = {
     { href: "/dashboard/user", label: "My Dashboard", icon: User },
     { href: "/dashboard/user/orders", label: "Order History", icon: ShoppingBag },
     { href: "/dashboard/user/wishlist", label: "My Wishlist", icon: Heart },
+    { href: "/dashboard/user/profile", label: "Profile Settings", icon: Settings },
   ],
   moderator: [
     { href: "/dashboard/mod", label: "Content Review", icon: ShieldCheck },
@@ -79,7 +80,7 @@ export function DashboardSidebar({ role }: DashboardSidebarProps) {
                     <SidebarMenuItem key={item.href}>
                         <Link href={item.href}>
                             <SidebarMenuButton 
-                                isActive={pathname.startsWith(item.href)}
+                                isActive={pathname === item.href}
                                 tooltip={item.label}
                             >
                                 <item.icon />

@@ -5,6 +5,7 @@ import { adminDb } from '@/lib/firebase/admin';
 import type { UserRole, AdminAppUser } from '@/types';
 import { getAuth } from 'firebase-admin/auth';
 import { revalidatePath } from 'next/cache';
+import * as z from 'zod';
 
 interface CreateUserDocumentArgs {
   uid: string;
@@ -64,5 +65,39 @@ export async function updateUserRole(uid: string, role: UserRole) {
     } catch (error) {
         console.error('Error updating user role:', error);
         return { success: false, error: 'Failed to update user role.' };
+    }
+}
+
+export const profileFormSchema = z.object({
+  displayName: z.string().min(2, { message: "Name must be at least 2 characters." }),
+});
+
+type ProfileFormValues = z.infer<typeof profileFormSchema>;
+
+export async function updateUserProfile(uid: string, data: ProfileFormValues) {
+    if (!uid) {
+        return { success: false, error: 'User not found.' };
+    }
+
+    try {
+        // Update Firebase Auth
+        await getAuth().updateUser(uid, {
+            displayName: data.displayName,
+        });
+
+        // Update Firestore document
+        const userRef = adminDb.collection('users').doc(uid);
+        await userRef.update({
+            displayName: data.displayName,
+        });
+
+        revalidatePath('/dashboard/user');
+        revalidatePath('/dashboard/user/profile');
+        revalidatePath('/', 'layout'); // Revalidate root layout to update UserNav
+        
+        return { success: true, message: 'Profile updated successfully!' };
+    } catch (error) {
+        console.error('Error updating user profile:', error);
+        return { success: false, error: 'Failed to update profile.' };
     }
 }

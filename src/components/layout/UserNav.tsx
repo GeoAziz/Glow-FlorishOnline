@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -19,7 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { LayoutDashboard, LogOut, User as UserIcon } from "lucide-react";
+import { LayoutDashboard, LogOut, User as UserIcon, ShoppingBag } from "lucide-react";
 
 
 export function UserNav() {
@@ -85,11 +86,17 @@ export function UserNav() {
               <span>Dashboard</span>
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem disabled>
-            Profile
+          <DropdownMenuItem asChild>
+            <Link href="/dashboard/user/profile">
+              <UserIcon className="mr-2 h-4 w-4" />
+              <span>Profile</span>
+            </Link>
           </DropdownMenuItem>
-           <DropdownMenuItem disabled>
-            Order History
+           <DropdownMenuItem asChild>
+            <Link href="/dashboard/user/orders">
+              <ShoppingBag className="mr-2 h-4 w-4" />
+              <span>Orders</span>
+            </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />

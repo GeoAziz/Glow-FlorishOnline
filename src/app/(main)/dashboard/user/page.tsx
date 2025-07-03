@@ -94,7 +94,7 @@ export default function UserDashboardPage() {
             </p>
           </CardContent>
            <div className="p-6 pt-0">
-             <Button disabled>Edit Profile</Button>
+             <Button asChild><Link href="/dashboard/user/profile">Edit Profile</Link></Button>
           </div>
         </Card>
       </div>
