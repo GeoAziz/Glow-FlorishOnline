@@ -78,3 +78,10 @@ export type Order = {
     status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
     createdAt: Date;
 };
+
+export type AdminOrder = Order & {
+    customer: {
+        name: string;
+        email: string | null;
+    }
+};

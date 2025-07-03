@@ -4,7 +4,8 @@
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { revalidatePath } from 'next/cache';
-import type { Order, OrderItem, ShippingAddress } from '@/types';
+import type { Order, OrderItem, ShippingAddress, AdminOrder } from '@/types';
+import { getAuth } from 'firebase-admin/auth';
 
 interface CreateOrderArgs {
   userId: string;
@@ -89,4 +90,60 @@ export async function getOrdersByUserId(userId: string): Promise<Order[]> {
     console.error('Error fetching orders for user:', error);
     return [];
   }
+}
+
+export async function getOrders(): Promise<AdminOrder[]> {
+    try {
+        const ordersSnapshot = await adminDb.collection('orders')
+            .orderBy('createdAt', 'desc')
+            .get();
+
+        if (ordersSnapshot.empty) {
+            return [];
+        }
+
+        const userIds = [...new Set(ordersSnapshot.docs.map(doc => doc.data().userId))];
+
+        const userResults = await getAuth().getUsers(userIds.map(uid => ({ uid })));
+        const usersMap = new Map(userResults.users.map(user => [user.uid, { name: user.displayName, email: user.email }]));
+
+        return ordersSnapshot.docs.map(doc => {
+            const data = doc.data();
+            const userId = data.userId;
+            const customerInfo = usersMap.get(userId);
+
+            const customer = {
+                name: customerInfo?.name || data.shippingAddress.fullName,
+                email: customerInfo?.email || null
+            };
+
+            return {
+                id: doc.id,
+                ...data,
+                createdAt: data.createdAt.toDate(),
+                customer,
+            } as AdminOrder;
+        });
+    } catch (error) {
+        console.error('Error fetching all orders:', error);
+        return [];
+    }
+}
+
+export async function updateOrderStatus(orderId: string, status: Order['status']) {
+    if (!orderId || !status) {
+        return { success: false, error: 'Order ID and status are required.' };
+    }
+    try {
+        const orderRef = adminDb.collection('orders').doc(orderId);
+        await orderRef.update({ status });
+        
+        revalidatePath('/dashboard/admin/orders');
+        revalidatePath(`/order-confirmation/${orderId}`);
+        
+        return { success: true };
+    } catch (error) {
+        console.error('Error updating order status:', error);
+        return { success: false, error: 'Failed to update order status.' };
+    }
 }
