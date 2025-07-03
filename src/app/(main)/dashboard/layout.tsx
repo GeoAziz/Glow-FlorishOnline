@@ -20,8 +20,7 @@ export default function DashboardLayout({
   const pathname = usePathname();
 
   useEffect(() => {
-    // If auth state is still loading, or the user object exists but the role hasn't been fetched yet, do nothing.
-    // The loading screen will be displayed.
+    // Wait until authentication status and user role are fully loaded.
     if (loading || (user && !user.role)) {
       return;
     }
@@ -33,22 +32,8 @@ export default function DashboardLayout({
     }
 
     // --- Role-Based Access Control ---
-    const isAdminPage = pathname.startsWith('/dashboard/admin');
-    const isModeratorPage = pathname.startsWith('/dashboard/mod');
 
-    // Rule 1: Only admins can access admin pages.
-    if (isAdminPage && user.role !== 'admin') {
-      router.replace('/unauthorized');
-      return;
-    }
-
-    // Rule 2: Only admins and moderators can access moderator pages.
-    if (isModeratorPage && user.role !== 'admin' && user.role !== 'moderator') {
-      router.replace('/unauthorized');
-      return;
-    }
-    
-    // Rule 3: If the user lands on the generic `/dashboard` page, redirect them to their specific dashboard homepage.
+    // Special Case: Redirect from the base /dashboard path to the role-specific homepage.
     if (pathname === '/dashboard') {
         const roleBasePaths: Record<UserRole, string> = {
             admin: "/dashboard/admin",
@@ -57,6 +42,35 @@ export default function DashboardLayout({
         };
         router.replace(roleBasePaths[user.role]);
         return;
+    }
+
+    // Define page types
+    const isAdminPage = pathname.startsWith('/dashboard/admin');
+    const isModeratorPage = pathname.startsWith('/dashboard/mod');
+    
+    // Explicitly define permissions for each role.
+
+    // Admins can access all dashboard pages.
+    if (user.role === 'admin') {
+      return; // No restrictions for admins.
+    }
+
+    // Moderators can access moderator pages and their own user pages.
+    if (user.role === 'moderator') {
+      if (isAdminPage) {
+        // If a moderator tries to access an admin-only page, redirect them.
+        router.replace('/unauthorized');
+      }
+      return; // Otherwise, allow access.
+    }
+
+    // Regular users can only access their own user pages.
+    if (user.role === 'user') {
+      if (isAdminPage || isModeratorPage) {
+        // If a user tries to access admin or moderator pages, redirect them.
+        router.replace('/unauthorized');
+      }
+      return; // Otherwise, allow access to /dashboard/user/* pages.
     }
 
   }, [user, loading, router, pathname]);
