@@ -30,10 +30,10 @@ export default function DashboardLayout({
       router.replace(`/auth?redirect=${pathname || "/dashboard"}`);
       return;
     }
+    
+    // --- START: New Robust Role-Based Access Control ---
 
-    // --- Role-Based Access Control ---
-
-    // Special Case: Redirect from the base /dashboard path to the role-specific homepage.
+    // 1. Handle the initial redirect from the base /dashboard path
     if (pathname === '/dashboard') {
         const roleBasePaths: Record<UserRole, string> = {
             admin: "/dashboard/admin",
@@ -44,34 +44,29 @@ export default function DashboardLayout({
         return;
     }
 
-    // Define page types
+    // 2. Define page access requirements
     const isAdminPage = pathname.startsWith('/dashboard/admin');
     const isModeratorPage = pathname.startsWith('/dashboard/mod');
-    
-    // Explicitly define permissions for each role.
 
-    // Admins can access all dashboard pages.
-    if (user.role === 'admin') {
-      return; // No restrictions for admins.
-    }
+    // 3. Enforce access rules
+    const userRole = user.role;
 
-    // Moderators can access moderator pages and their own user pages.
-    if (user.role === 'moderator') {
-      if (isAdminPage) {
-        // If a moderator tries to access an admin-only page, redirect them.
+    // Rule for 'user' role
+    if (userRole === 'user' && (isAdminPage || isModeratorPage)) {
         router.replace('/unauthorized');
-      }
-      return; // Otherwise, allow access.
+        return;
     }
 
-    // Regular users can only access their own user pages.
-    if (user.role === 'user') {
-      if (isAdminPage || isModeratorPage) {
-        // If a user tries to access admin or moderator pages, redirect them.
+    // Rule for 'moderator' role
+    if (userRole === 'moderator' && isAdminPage) {
         router.replace('/unauthorized');
-      }
-      return; // Otherwise, allow access to /dashboard/user/* pages.
+        return;
     }
+
+    // Rule for 'admin' role: Admins can access everything, so no redirect rules are needed for them.
+    // By reaching this point, an admin is granted access.
+
+    // --- END: New Robust Role-Based Access Control ---
 
   }, [user, loading, router, pathname]);
 
