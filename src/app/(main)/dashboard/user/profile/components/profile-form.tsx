@@ -1,13 +1,12 @@
-
 "use client";
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-import { updateUserProfile, profileFormSchema } from "@/actions/user";
+import { updateUserProfile } from "@/actions/user";
+import { profileFormSchema, type ProfileFormValues } from "@/lib/schemas/user";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,8 +14,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Loader2 } from "lucide-react";
 import type { AppUser } from "@/types";
-
-type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 interface ProfileFormProps {
     user: AppUser;

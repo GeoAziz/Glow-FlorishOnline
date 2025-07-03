@@ -3,18 +3,16 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { Star, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { submitReview, reviewFormSchema } from "@/actions/review";
+import { submitReview } from "@/actions/review";
+import { reviewFormSchema, type ReviewFormValues } from "@/lib/schemas/review";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-
-type ReviewFormValues = z.infer<typeof reviewFormSchema>;
 
 interface ProductReviewFormProps {
     productId: string;

@@ -2,11 +2,11 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-import { productFormSchema, createProduct } from "@/actions/product";
+import { createProduct } from "@/actions/product";
+import { productFormSchema, type ProductFormValues } from "@/lib/schemas/product";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,8 +15,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Loader2 } from "lucide-react";
-
-type ProductFormValues = z.infer<typeof productFormSchema>;
 
 const categories = ["Skin", "Hair", "Wellness", "Makeup"] as const;
 

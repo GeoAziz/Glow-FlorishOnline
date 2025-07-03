@@ -4,19 +4,9 @@
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { revalidatePath } from 'next/cache';
-import * as z from 'zod';
 import { randomUUID } from 'crypto';
 import type { Product } from '@/types';
-
-export const reviewFormSchema = z.object({
-  productId: z.string(),
-  slug: z.string(),
-  rating: z.coerce.number().min(1, "Rating is required.").max(5),
-  text: z.string().min(10, { message: "Review must be at least 10 characters." }),
-  author: z.string(),
-});
-
-type ReviewFormValues = z.infer<typeof reviewFormSchema>;
+import type { ReviewFormValues } from '@/lib/schemas/review';
 
 export async function submitReview(data: ReviewFormValues) {
     try {

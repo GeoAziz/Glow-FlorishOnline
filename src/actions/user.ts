@@ -5,7 +5,7 @@ import { adminDb } from '@/lib/firebase/admin';
 import type { UserRole, AdminAppUser } from '@/types';
 import { getAuth } from 'firebase-admin/auth';
 import { revalidatePath } from 'next/cache';
-import * as z from 'zod';
+import type { ProfileFormValues } from '@/lib/schemas/user';
 
 interface CreateUserDocumentArgs {
   uid: string;
@@ -67,12 +67,6 @@ export async function updateUserRole(uid: string, role: UserRole) {
         return { success: false, error: 'Failed to update user role.' };
     }
 }
-
-export const profileFormSchema = z.object({
-  displayName: z.string().min(2, { message: "Name must be at least 2 characters." }),
-});
-
-type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 export async function updateUserProfile(uid: string, data: ProfileFormValues) {
     if (!uid) {
