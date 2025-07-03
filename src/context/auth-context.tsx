@@ -3,8 +3,8 @@
 import { createContext, useState, useEffect, type ReactNode } from "react";
 import { onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
 import { auth, db } from "@/lib/firebase/client";
-import { doc, getDoc, onSnapshot } from "firebase/firestore";
-import type { AppUser, UserRole } from "@/types";
+import { doc, onSnapshot } from "firebase/firestore";
+import type { AppUser } from "@/types";
 
 export interface AuthContextType {
   user: AppUser | null;
@@ -18,50 +18,57 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+    let unsubscribeFirestore: (() => void) | undefined;
+    
+    const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
+      // Clean up the previous Firestore listener when the user changes
+      if (unsubscribeFirestore) {
+        unsubscribeFirestore();
+      }
+
       if (firebaseUser) {
+        setLoading(true); // Always start loading when a user is detected
         const userDocRef = doc(db, "users", firebaseUser.uid);
         
-        // Use onSnapshot to listen for real-time changes to the user's role
-        const unsubscribeFirestore = onSnapshot(userDocRef, (doc) => {
+        unsubscribeFirestore = onSnapshot(userDocRef, (doc) => {
             if (doc.exists()) {
+                // If the document exists, we have the role. Update user and stop loading.
                 const { role, ...rest } = doc.data();
                 setUser({
                     ...firebaseUser,
                     role: role || 'user',
                     ...rest
                 } as AppUser);
-            } else {
-                 // If doc doesn't exist yet, optimistically set role to 'user'
-                 setUser({ ...firebaseUser, role: 'user' });
+                setLoading(false);
             }
-            setLoading(false);
+            // If doc doesn't exist, we do nothing and wait. `loading` remains true.
+            // onSnapshot will fire again once the document is created by the server action.
         }, (error) => {
             console.error("Error listening to user document:", error);
-            // Fallback for safety
+            // On error, default to user role and stop loading as a fallback.
             setUser({ ...firebaseUser, role: 'user' });
             setLoading(false);
         });
 
-        // Return the firestore unsubscribe function to be called on cleanup
-        return unsubscribeFirestore;
       } else {
+        // User is logged out
         setUser(null);
         setLoading(false);
       }
     });
 
-    return () => unsubscribeAuth();
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeFirestore) {
+        unsubscribeFirestore();
+      }
+    };
   }, []);
 
 
   return (
     <AuthContext.Provider value={{ user, loading }}>
-      {loading ? (
-         <div className="w-full h-screen flex items-center justify-center">
-             <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background" />
-         </div>
-      ) : children }
+      {children}
     </AuthContext.Provider>
   );
 };
