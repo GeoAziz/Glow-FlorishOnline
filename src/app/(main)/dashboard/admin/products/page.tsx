@@ -27,7 +27,7 @@ export default async function AdminProductsPage() {
                 A list of all products in your store.
             </p>
         </div>
-        <Button asChild disabled>
+        <Button asChild>
             <Link href="/dashboard/admin/products/new">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Add Product
