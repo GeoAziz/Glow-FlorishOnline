@@ -3,6 +3,8 @@
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { revalidatePath } from 'next/cache';
+import { getProductsByIds } from '@/lib/data';
+import type { Product } from '@/types';
 
 export async function addToWishlist(userId: string, productId: string) {
   if (!userId || !productId) {
@@ -57,4 +59,12 @@ export async function getWishlist(userId: string): Promise<string[]> {
         console.error('Error fetching wishlist:', error);
         return [];
     }
+}
+
+export async function getWishlistProducts(productIds: string[]): Promise<Product[]> {
+    if (!productIds || productIds.length === 0) {
+        return [];
+    }
+    // This is now a server action that can be safely called from a client component
+    return getProductsByIds(productIds);
 }

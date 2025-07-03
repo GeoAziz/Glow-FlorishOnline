@@ -4,8 +4,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
-import { getWishlist } from '@/actions/wishlist';
-import { getProductsByIds } from '@/lib/data';
+import { getWishlist, getWishlistProducts } from '@/actions/wishlist';
 import type { Product } from '@/types';
 
 import { ProductCard } from '@/app/(main)/shop/components/product-card';
@@ -23,7 +22,7 @@ export default function WishlistPage() {
         setLoading(true);
         const productIds = await getWishlist(user.uid);
         if (productIds.length > 0) {
-          const products = await getProductsByIds(productIds);
+          const products = await getWishlistProducts(productIds);
           setWishlistProducts(products);
         }
         setLoading(false);
