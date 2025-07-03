@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Plus, Heart } from "lucide-react";
+import { ShoppingCart, Heart } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { Product } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -88,7 +88,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
       <CardFooter className="p-4 pt-0 flex justify-between items-center">
         <p className="font-bold text-lg">${product.price.toFixed(2)}</p>
         <Button size="icon" variant="outline" onClick={handleAddToCart} aria-label={`Add ${product.name} to cart`}>
-          <Plus className="h-4 w-4" />
+          <ShoppingCart className="h-4 w-4" />
         </Button>
       </CardFooter>
     </Card>
