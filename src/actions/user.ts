@@ -1,7 +1,10 @@
+
 'use server';
 
 import { adminDb } from '@/lib/firebase/admin';
-import type { UserRole } from '@/types';
+import type { UserRole, AdminAppUser } from '@/types';
+import { getAuth } from 'firebase-admin/auth';
+import { revalidatePath } from 'next/cache';
 
 interface CreateUserDocumentArgs {
   uid: string;
@@ -15,7 +18,6 @@ export async function createUserDocument({ uid, email, name }: CreateUserDocumen
     
     const userDoc = await userRef.get();
     if (userDoc.exists) {
-        // User document already exists, do nothing.
         return { success: true, message: 'User document already exists.' };
     }
 
@@ -32,4 +34,35 @@ export async function createUserDocument({ uid, email, name }: CreateUserDocumen
     console.error('Error creating user document:', error);
     return { success: false, error: 'Failed to create user document.' };
   }
+}
+
+export async function getUsers(): Promise<AdminAppUser[]> {
+    try {
+        const userRecords = await getAuth().listUsers();
+        const usersCollection = await adminDb.collection('users').get();
+        const rolesMap = new Map(usersCollection.docs.map(doc => [doc.id, doc.data().role]));
+        
+        return userRecords.users.map(userRecord => ({
+            ...userRecord,
+            // Assert role type, defaulting to 'user' if not found in Firestore
+            role: (rolesMap.get(userRecord.uid) || 'user') as UserRole,
+        }));
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        return [];
+    }
+}
+
+export async function updateUserRole(uid: string, role: UserRole) {
+    try {
+        const userRef = adminDb.collection('users').doc(uid);
+        await userRef.update({ role });
+        
+        revalidatePath('/dashboard/admin/users');
+        
+        return { success: true };
+    } catch (error) {
+        console.error('Error updating user role:', error);
+        return { success: false, error: 'Failed to update user role.' };
+    }
 }
