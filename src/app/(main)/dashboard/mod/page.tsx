@@ -1,7 +1,13 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquareWarning, ShieldCheck } from "lucide-react";
 
-export default function ModeratorDashboardPage() {
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { getPendingReviews } from "@/lib/data";
+
+export default async function ModeratorDashboardPage() {
+  const pendingReviews = await getPendingReviews();
+  
   return (
     <div>
       <h1 className="text-4xl font-bold font-headline mb-2">Moderator Dashboard</h1>
@@ -14,22 +20,13 @@ export default function ModeratorDashboardPage() {
             <ShieldCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">72</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-2xl font-bold">{pendingReviews.length}</p>
+            <p className="text-xs text-muted-foreground mb-4">
               Items pending review
             </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">User Reports</CardTitle>
-            <MessageSquareWarning className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">15</p>
-            <p className="text-xs text-muted-foreground">
-              New reports to address
-            </p>
+             <Button asChild size="sm">
+                <Link href="/dashboard/mod/reviews">Go to Queue</Link>
+            </Button>
           </CardContent>
         </Card>
       </div>

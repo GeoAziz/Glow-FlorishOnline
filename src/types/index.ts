@@ -23,6 +23,12 @@ export type Review = {
   createdAt: Date;
 };
 
+export type PendingReview = Review & {
+  productId: string;
+  productSlug: string;
+  productName: string;
+};
+
 export type Product = {
   id: string;
   slug: string;

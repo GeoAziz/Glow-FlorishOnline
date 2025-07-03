@@ -44,8 +44,8 @@ const navItemsByRole: Record<UserRole, NavItem[]> = {
     { href: "/dashboard/user/profile", label: "Profile Settings", icon: Settings },
   ],
   moderator: [
-    { href: "/dashboard/mod", label: "Content Review", icon: ShieldCheck },
-    { href: "/dashboard/mod/reports", label: "Reports", icon: MessageSquareWarning },
+    { href: "/dashboard/mod", label: "Dashboard", icon: Home },
+    { href: "/dashboard/mod/reviews", label: "Review Queue", icon: ShieldCheck },
   ],
   admin: [
     { href: "/dashboard/admin", label: "Overview", icon: Home },

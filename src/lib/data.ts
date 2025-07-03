@@ -1,7 +1,8 @@
 
 import { adminDb } from './firebase/admin';
-import type { Product, BlogPost, Review } from "@/types";
+import type { Product, BlogPost, Review, PendingReview, Order } from "@/types";
 import type { Query, DocumentSnapshot } from 'firebase-admin/firestore';
+import { getAuth } from 'firebase-admin/auth';
 
 // This data is now used for seeding the database only.
 // See scripts/seed-db.ts
@@ -322,4 +323,90 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> 
     console.error(`Error fetching blog post by slug ${slug}:`, error);
     return null;
   }
+}
+
+
+export async function getPendingReviews(): Promise<PendingReview[]> {
+  try {
+    const productsSnapshot = await adminDb.collection('products').get();
+    if (productsSnapshot.empty) {
+      return [];
+    }
+
+    const allPendingReviews: PendingReview[] = [];
+
+    productsSnapshot.docs.forEach(doc => {
+      const product = convertDocToProduct(doc);
+      const pendingReviews = product.reviews.filter(r => r.status === 'pending');
+
+      if (pendingReviews.length > 0) {
+        pendingReviews.forEach(review => {
+          allPendingReviews.push({
+            ...review,
+            productId: product.id,
+            productSlug: product.slug,
+            productName: product.name,
+          });
+        });
+      }
+    });
+
+    return allPendingReviews;
+  } catch (error) {
+    console.error("Error fetching pending reviews:", error);
+    return [];
+  }
+}
+
+export async function getAdminDashboardStats() {
+    try {
+        const ordersPromise = adminDb.collection('orders').get();
+        const usersPromise = getAuth().listUsers();
+
+        const [ordersSnapshot, userRecords] = await Promise.all([ordersPromise, usersPromise]);
+
+        // Calculate Revenue and Sales
+        let totalRevenue = 0;
+        const totalSales = ordersSnapshot.size;
+        ordersSnapshot.forEach(doc => {
+            totalRevenue += doc.data().total;
+        });
+
+        // Calculate New Users this month
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+        const newUsersThisMonth = userRecords.users.filter(user => {
+            const creationTime = new Date(user.metadata.creationTime);
+            return creationTime >= oneMonthAgo;
+        }).length;
+
+        // Get recent orders
+        const recentOrdersSnapshot = await adminDb.collection('orders').orderBy('createdAt', 'desc').limit(5).get();
+        const recentOrders = recentOrdersSnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                createdAt: data.createdAt.toDate(),
+            } as Order;
+        });
+
+        return {
+            totalRevenue,
+            totalSales,
+            newUsersThisMonth,
+            recentOrders,
+            totalUsers: userRecords.users.length
+        };
+
+    } catch (error) {
+        console.error('Error fetching admin dashboard stats:', error);
+        return {
+            totalRevenue: 0,
+            totalSales: 0,
+            newUsersThisMonth: 0,
+            totalUsers: 0,
+            recentOrders: [] as Order[]
+        };
+    }
 }
