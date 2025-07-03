@@ -1,5 +1,13 @@
+import { Suspense } from 'react';
 import { AuthForm } from "./components/auth-form";
 import Logo from "@/components/shared/Logo";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// A simple fallback that mimics the size of the AuthForm
+function AuthFormFallback() {
+  return <Skeleton className="h-[490px] w-full max-w-sm rounded-2xl" />;
+}
+
 
 export default function AuthenticationPage() {
   return (
@@ -7,7 +15,9 @@ export default function AuthenticationPage() {
       <div className="flex justify-center mb-4">
         <Logo />
       </div>
-      <AuthForm />
+      <Suspense fallback={<AuthFormFallback />}>
+        <AuthForm />
+      </Suspense>
     </div>
   );
 }
