@@ -1,8 +1,10 @@
+
 "use client";
 
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
 
 export default function AdminLayout({
   children,
@@ -12,17 +14,18 @@ export default function AdminLayout({
   const { user, loading } = useAuth();
   const router = useRouter();
 
-  if (loading) {
+  useEffect(() => {
+    if (!loading && user?.role !== "admin") {
+      router.replace("/unauthorized");
+    }
+  }, [user, loading, router]);
+
+  if (loading || user?.role !== "admin") {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
       </div>
     );
-  }
-
-  if (user?.role !== "admin") {
-    router.replace("/unauthorized");
-    return null;
   }
 
   return <>{children}</>;
