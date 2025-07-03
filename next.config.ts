@@ -18,6 +18,20 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  webpack(config, { isServer }) {
+    // Required for farmhash-modern, a dependency of Genkit
+    config.experiments = { ...config.experiments, asyncWebAssembly: true };
+
+    if (isServer) {
+        // Genkit dependencies that are not needed for the client-side build
+        config.externals.push('farmhash-modern');
+        config.externals.push('handlebars');
+    }
+    
+    config.output.webassemblyModuleFilename = 'static/wasm/[modulehash].wasm';
+    
+    return config;
+  },
 };
 
 export default nextConfig;

@@ -21,7 +21,7 @@ export default function DashboardLayout({
 
   useEffect(() => {
     // Wait until authentication status and user role are fully loaded.
-    if (loading || (user && !user.role)) {
+    if (loading || !user?.role) {
       return;
     }
 
@@ -31,7 +31,7 @@ export default function DashboardLayout({
       return;
     }
     
-    // --- START: New Robust Role-Based Access Control ---
+    // --- START: Robust Role-Based Access Control ---
 
     // 1. Handle the initial redirect from the base /dashboard path
     if (pathname === '/dashboard') {
@@ -47,26 +47,27 @@ export default function DashboardLayout({
     // 2. Define page access requirements
     const isAdminPage = pathname.startsWith('/dashboard/admin');
     const isModeratorPage = pathname.startsWith('/dashboard/mod');
+    const isUserPage = pathname.startsWith('/dashboard/user');
 
     // 3. Enforce access rules
     const userRole = user.role;
 
-    // Rule for 'user' role
+    // Rule for 'user' role: Can only access their own pages.
     if (userRole === 'user' && (isAdminPage || isModeratorPage)) {
         router.replace('/unauthorized');
         return;
     }
 
-    // Rule for 'moderator' role
+    // Rule for 'moderator' role: Can access mod and user pages, but not admin pages.
     if (userRole === 'moderator' && isAdminPage) {
         router.replace('/unauthorized');
         return;
     }
 
-    // Rule for 'admin' role: Admins can access everything, so no redirect rules are needed for them.
-    // By reaching this point, an admin is granted access.
+    // Rule for 'admin' role: Admins can access everything, so no explicit redirects are needed
+    // to block them. They can view user and moderator pages.
 
-    // --- END: New Robust Role-Based Access Control ---
+    // --- END: Robust Role-Based Access Control ---
 
   }, [user, loading, router, pathname]);
 
