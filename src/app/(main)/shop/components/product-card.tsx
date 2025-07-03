@@ -19,13 +19,14 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, className }: ProductCardProps) {
-  const { addToCart } = useCart();
+  const { cart, addToCart } = useCart();
   const { user } = useAuth();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { toast } = useToast();
   const router = useRouter();
 
   const isWishlisted = isInWishlist(product.id);
+  const isInCart = cart.some(item => item.product.id === product.id);
 
   const handleWishlistToggle = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault(); // Prevent Link navigation
@@ -87,8 +88,13 @@ export function ProductCard({ product, className }: ProductCardProps) {
       </CardContent>
       <CardFooter className="p-4 pt-0 flex justify-between items-center">
         <p className="font-bold text-lg">${product.price.toFixed(2)}</p>
-        <Button size="icon" variant="outline" onClick={handleAddToCart} aria-label={`Add ${product.name} to cart`}>
-          <ShoppingCart className="h-4 w-4" />
+        <Button 
+          size="icon" 
+          variant="outline" 
+          onClick={handleAddToCart} 
+          aria-label={isInCart ? `${product.name} is in the cart` : `Add ${product.name} to cart`}
+        >
+          <ShoppingCart className={cn("h-4 w-4", isInCart && "fill-primary text-primary")} />
         </Button>
       </CardFooter>
     </Card>
