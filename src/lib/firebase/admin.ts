@@ -28,7 +28,7 @@ function initializeFirebaseAdmin() {
           clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
         }),
       });
-      console.log("Firebase Admin SDK initialized successfully for production.");
+      console.log("[Admin SDK] Initialized successfully for production.");
       return; // Success
     } catch (error: any) {
       throw new Error(`CRITICAL: Failed to initialize Firebase from environment variables. Check their format. Error: ${error.message}`);
@@ -36,18 +36,33 @@ function initializeFirebaseAdmin() {
   }
 
   // Use local service account file in development
+  const serviceAccountPath = path.resolve(process.cwd(), 'service-account-key.json');
+  console.log(`[Admin SDK] Looking for service account key at: ${serviceAccountPath}`);
+
+  if (!fs.existsSync(serviceAccountPath)) {
+    console.error('--------------------------------------------------------------------');
+    console.error('!!! FIREBASE ADMIN SDK INITIALIZATION FAILED !!!');
+    console.error('CRITICAL: `service-account-key.json` not found for local development.');
+    console.error('Please download it from your Firebase project settings (Service Accounts > Generate new private key)');
+    console.error('and place it in the root directory of your project.');
+    console.error('--------------------------------------------------------------------');
+    throw new Error('Missing service-account-key.json');
+  }
+
   try {
-    const serviceAccountPath = path.resolve(process.cwd(), 'service-account-key.json');
-    if (!fs.existsSync(serviceAccountPath)) {
-        throw new Error("CRITICAL: `service-account-key.json` not found in the project root for local development.");
-    }
     const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     });
-    console.log("Firebase Admin SDK initialized successfully from local file.");
+    console.log("[Admin SDK] Initialized successfully from local file.");
   } catch (error: any) {
-     throw new Error(`CRITICAL: Failed to initialize Firebase Admin SDK from local file. Error: ${error.message}`);
+     console.error('--------------------------------------------------------------------');
+     console.error('!!! FIREBASE ADMIN SDK INITIALIZATION FAILED !!!');
+     console.error('CRITICAL: Failed to parse `service-account-key.json` or initialize the app.');
+     console.error('Please ensure the file is a valid JSON downloaded from Firebase.');
+     console.error(`Error details: ${error.message}`);
+     console.error('--------------------------------------------------------------------');
+     throw new Error(`Invalid service-account-key.json: ${error.message}`);
   }
 }
 
