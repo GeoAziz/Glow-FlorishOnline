@@ -4,7 +4,7 @@
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { revalidatePath } from 'next/cache';
-import type { Order, OrderItem, ShippingAddress, PaymentMethod } from '@/types';
+import type { Order, OrderItem, ShippingAddress, PaymentMethod, AdminOrder } from '@/types';
 import { getAuth } from 'firebase-admin/auth';
 
 interface CreateOrderArgs {
@@ -24,30 +24,65 @@ export async function createOrder({ userId, items, total, shippingAddress, payme
   }
 
   try {
-    const orderRef = adminDb.collection('orders').doc();
-    
-    const newOrder: Omit<Order, 'id' | 'createdAt'> = {
-      userId,
-      items,
-      total,
-      shippingAddress,
-      status: 'pending',
-      paymentMethod,
-      paymentStatus: paymentMethod === 'paypal' ? 'paid' : 'unpaid',
-      paymentDetails: paymentDetails || {},
-      createdAt: FieldValue.serverTimestamp() as any, // Firestore handles the timestamp
-    };
+    const orderId = await adminDb.runTransaction(async (transaction) => {
+      const productRefs = items.map(item => adminDb.collection('products').doc(item.productId));
+      const productDocs = await transaction.getAll(...productRefs);
 
-    await orderRef.set(newOrder);
-    
-    // In a real app, you would also decrement stock here in a transaction.
-    // For now, we'll skip that part.
+      // Check for stock and prepare updates
+      for (const doc of productDocs) {
+        if (!doc.exists) {
+          throw new Error(`One of the products in your cart could not be found.`);
+        }
+        const productData = doc.data()!;
+        const orderedItem = items.find(item => item.productId === doc.id);
+
+        if (!orderedItem) {
+          // This case should not be reachable if cart data is consistent
+          throw new Error(`Inconsistency in cart data for product ID ${doc.id}`);
+        }
+        
+        if (productData.stock < orderedItem.quantity) {
+          throw new Error(`Sorry, "${productData.name}" is out of stock. Please remove it from your cart and try again.`);
+        }
+      }
+
+      // If all checks pass, perform writes
+      productDocs.forEach(doc => {
+        const orderedItem = items.find(item => item.productId === doc.id)!;
+        const newStock = doc.data()!.stock - orderedItem.quantity;
+        transaction.update(doc.ref, { stock: newStock });
+      });
+
+      // Create the new order document
+      const orderRef = adminDb.collection('orders').doc();
+      const newOrder: Omit<Order, 'id' | 'createdAt'> = {
+        userId,
+        items,
+        total,
+        shippingAddress,
+        status: 'pending',
+        paymentMethod,
+        paymentStatus: paymentMethod === 'paypal' ? 'paid' : 'unpaid',
+        paymentDetails: paymentDetails || {},
+        createdAt: FieldValue.serverTimestamp() as any,
+      };
+      transaction.set(orderRef, newOrder);
+      
+      return orderRef.id;
+    });
 
     revalidatePath('/checkout');
-    return { success: true, orderId: orderRef.id };
-  } catch (error) {
+    // Also revalidate pages that show stock info
+    revalidatePath('/shop');
+    revalidatePath('/product', 'layout');
+
+
+    return { success: true, orderId };
+
+  } catch (error: any) {
     console.error('Error creating order:', error);
-    return { error: 'Failed to create order.' };
+    // Return the specific error message from the transaction to the client
+    return { error: error.message || 'Failed to create order due to an unexpected error.' };
   }
 }
 
