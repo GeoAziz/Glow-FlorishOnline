@@ -1,3 +1,4 @@
+
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
@@ -13,28 +14,32 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Check for missing environment variables during development
-if (process.env.NODE_ENV !== 'production') {
-    const requiredKeys: (keyof typeof firebaseConfig)[] = [
-        'apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId'
-    ];
+// Universal check for required Firebase credentials.
+const requiredKeys: (keyof typeof firebaseConfig)[] = [
+    'apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId'
+];
 
-    for (const key of requiredKeys) {
-        if (!firebaseConfig[key]) {
-            const envVarName = `NEXT_PUBLIC_FIREBASE_${key.replace(/([A-Z])/g, '_$1').toUpperCase()}`;
-            const errorMessage = `
+for (const key of requiredKeys) {
+    if (!firebaseConfig[key]) {
+        const envVarName = `NEXT_PUBLIC_FIREBASE_${key.replace(/([A-Z])/g, '_$1').toUpperCase()}`;
+        const errorMessage = `CRITICAL: Missing Firebase client config value for ${key}. Please set ${envVarName} in your environment.`;
+
+        if (process.env.NODE_ENV !== 'production') {
+            // For local development, throw a detailed error to stop the build.
+            const detailedError = `
         
         --------------------------------------------------------------------
         !!! FIREBASE CLIENT SDK INITIALIZATION FAILED !!!
-        CRITICAL: Missing environment variable ${envVarName}.
-        Please create a .env.local file in the root of your project
-        and add all the necessary Firebase credentials.
-        You can copy the contents of .env.example to get started.
-        Find your credentials in your Firebase project settings.
+        ${errorMessage}
+        Please create or check your .env.local file.
         --------------------------------------------------------------------
       
       `;
-            throw new Error(errorMessage);
+            throw new Error(detailedError);
+        } else {
+            // For production, log a critical error to the console.
+            // Throwing an error here would crash the entire client-side app.
+            console.error(errorMessage);
         }
     }
 }
