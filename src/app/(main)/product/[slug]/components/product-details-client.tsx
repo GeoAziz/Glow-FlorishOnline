@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { Star, Minus, Plus, Heart } from "lucide-react";
 import type { Product } from "@/types";
@@ -15,6 +15,14 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { ProductReviewForm } from "./product-review-form";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  type CarouselApi,
+} from "@/components/ui/carousel";
 
 interface ProductDetailsClientProps {
   product: Product;
@@ -23,12 +31,36 @@ interface ProductDetailsClientProps {
 export function ProductDetailsClient({ product }: ProductDetailsClientProps) {
   const [quantity, setQuantity] = useState(1);
   const { addToCart } = useCart();
-  const [activeImage, setActiveImage] = useState(product.images[0]);
+  
+  const [mainApi, setMainApi] = useState<CarouselApi>();
+  const [thumbApi, setThumbApi] = useState<CarouselApi>();
+  const [selectedIndex, setSelectedIndex] = useState(0);
   
   const { user } = useAuth();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const router = useRouter();
   const { toast } = useToast();
+  
+  const onThumbClick = useCallback(
+    (index: number) => {
+      if (!mainApi || !thumbApi) return;
+      mainApi.scrollTo(index);
+    },
+    [mainApi, thumbApi]
+  );
+
+  const onSelect = useCallback(() => {
+    if (!mainApi || !thumbApi) return;
+    setSelectedIndex(mainApi.selectedScrollSnap());
+    thumbApi.scrollTo(mainApi.selectedScrollSnap());
+  }, [mainApi, thumbApi]);
+
+  useEffect(() => {
+    if (!mainApi) return;
+    onSelect();
+    mainApi.on("select", onSelect);
+    mainApi.on("reInit", onSelect);
+  }, [mainApi, onSelect]);
 
   const handleAddToCart = () => {
     addToCart(product, quantity);
@@ -62,34 +94,49 @@ export function ProductDetailsClient({ product }: ProductDetailsClientProps) {
   return (
     <div className="grid md:grid-cols-2 gap-8 lg:gap-16">
       {/* Image Gallery */}
-      <div className="flex flex-col gap-4">
-        <div className="aspect-square relative rounded-lg overflow-hidden shadow-md">
-          <Image
-            src={activeImage}
-            alt={product.name}
-            fill
-            className="object-cover transition-opacity duration-300"
-            data-ai-hint="cosmetic product"
-          />
-        </div>
-        <div className="grid grid-cols-4 gap-4">
-          {product.images.map((img, index) => (
-            <button
-              key={index}
-              className={`aspect-square relative rounded-md overflow-hidden transition-all duration-200 ${
-                activeImage === img ? 'ring-2 ring-primary ring-offset-2' : 'opacity-70 hover:opacity-100'
-              }`}
-              onClick={() => setActiveImage(img)}
-            >
-              <Image
-                src={img}
-                alt={`${product.name} thumbnail ${index + 1}`}
-                fill
-                className="object-cover"
-              />
-            </button>
-          ))}
-        </div>
+      <div className="flex flex-col gap-2">
+        <Carousel setApi={setMainApi} className="w-full">
+            <CarouselContent>
+                {product.images.map((img, index) => (
+                    <CarouselItem key={index}>
+                        <div className="aspect-square relative rounded-lg overflow-hidden shadow-md">
+                            <Image
+                                src={img}
+                                alt={`${product.name} - Image ${index + 1}`}
+                                fill
+                                priority={index === 0}
+                                className="object-cover"
+                                data-ai-hint="cosmetic product"
+                            />
+                        </div>
+                    </CarouselItem>
+                ))}
+            </CarouselContent>
+            <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 hidden md:flex" />
+            <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 hidden md:flex" />
+        </Carousel>
+        <Carousel setApi={setThumbApi} opts={{ align: "start", slidesToScroll: 1, dragFree: true }}>
+            <CarouselContent className="px-1 -ml-2">
+                {product.images.map((img, index) => (
+                    <CarouselItem key={index} className="basis-1/4 pl-2 cursor-pointer">
+                        <div
+                            onClick={() => onThumbClick(index)}
+                            className={cn(
+                            "aspect-square relative rounded-md overflow-hidden transition-all duration-200",
+                            index === selectedIndex ? 'ring-2 ring-primary ring-offset-2' : 'opacity-70 hover:opacity-100'
+                            )}
+                        >
+                            <Image 
+                                src={img}
+                                alt={`${product.name} thumbnail ${index + 1}`}
+                                fill
+                                className="object-cover"
+                            />
+                        </div>
+                    </CarouselItem>
+                ))}
+            </CarouselContent>
+        </Carousel>
       </div>
 
       {/* Product Info */}
