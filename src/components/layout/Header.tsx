@@ -16,6 +16,7 @@ import { UserNav } from "./UserNav";
 
 const navLinks = [
   { href: "/shop", label: "Shop" },
+  { href: "/routine-advisor", label: "AI Advisor" },
   { href: "/our-story", label: "Our Story" },
   { href: "/blog", label: "Blog" },
   { href: "/contact", label: "Contact" },
