@@ -11,21 +11,37 @@ function initializeFirebaseAdmin() {
 
   // Use environment variables in production (e.g., Vercel)
   if (process.env.NODE_ENV === 'production') {
-    // Ensure all required variables are present
-    if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_PRIVATE_KEY || !process.env.FIREBASE_CLIENT_EMAIL) {
-      throw new Error(
-        'CRITICAL: Missing Firebase Admin SDK environment variables. ' +
-        'Please set FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY, and FIREBASE_CLIENT_EMAIL in your Vercel project settings.'
-      );
+    const projectId = process.env.FIREBASE_PROJECT_ID;
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+
+    const missingVars = [];
+    if (!projectId) missingVars.push('FIREBASE_PROJECT_ID');
+    if (!privateKey) missingVars.push('FIREBASE_PRIVATE_KEY');
+    if (!clientEmail) missingVars.push('FIREBASE_CLIENT_EMAIL');
+
+    if (missingVars.length > 0) {
+      console.error('--------------------------------------------------------------------');
+      console.error('!!! FIREBASE ADMIN SDK INITIALIZATION FAILED IN PRODUCTION !!!');
+      console.error('CRITICAL: The following server-side environment variables are missing in your Vercel project settings:');
+      console.error(`- ${missingVars.join('\n- ')}`);
+      console.error('\nPlease go to your Vercel project > Settings > Environment Variables and add them.');
+      console.error('---');
+      console.error('Current Status:');
+      console.error(`- Found FIREBASE_PROJECT_ID: ${!!projectId}`);
+      console.error(`- Found FIREBASE_PRIVATE_KEY: ${!!privateKey}`);
+      console.error(`- Found FIREBASE_CLIENT_EMAIL: ${!!clientEmail}`);
+      console.error('--------------------------------------------------------------------');
+      throw new Error(`Missing critical Firebase Admin environment variables: ${missingVars.join(', ')}.`);
     }
     
     try {
       admin.initializeApp({
         credential: admin.credential.cert({
-          projectId: process.env.FIREBASE_PROJECT_ID,
+          projectId: projectId,
           // Vercel escapes newlines, so we need to replace them back
-          privateKey: (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
-          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          privateKey: (privateKey || '').replace(/\\n/g, '\n'),
+          clientEmail: clientEmail,
         }),
       });
       console.log("[Admin SDK] Initialized successfully for production.");
