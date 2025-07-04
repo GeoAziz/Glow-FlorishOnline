@@ -1,4 +1,3 @@
-
 'use server';
 
 import { adminDb } from '@/lib/firebase/admin';
@@ -49,12 +48,14 @@ export async function getUsers(): Promise<AdminAppUser[]> {
         const usersCollection = await adminDb.collection('users').get();
         const rolesMap = new Map(usersCollection.docs.map(doc => [doc.id, doc.data().role]));
         
-        return userRecords.users.map(userRecord => ({
-            ...userRecord,
-            toJSON: () => userRecord.toJSON(), // Include the toJSON method
-            // Assert role type, defaulting to 'user' if not found in Firestore
-            role: (rolesMap.get(userRecord.uid) || 'user') as UserRole,
-        }));
+        return userRecords.users.map(userRecord => {
+            const plainUser = userRecord.toJSON();
+            const role = (rolesMap.get(userRecord.uid) || 'user') as UserRole;
+            return {
+                ...plainUser,
+                role: role,
+            }
+        });
     } catch (error) {
         console.error('Error fetching users:', error);
         return [];

@@ -1,6 +1,6 @@
 
 import type { User as FirebaseUser } from "firebase/auth";
-import type { UserRecord } from 'firebase-admin/auth';
+import type { UserInfo } from 'firebase-admin/auth';
 
 export type UserRole = 'admin' | 'moderator' | 'user';
 
@@ -8,7 +8,7 @@ export interface AppUser extends FirebaseUser {
   role: UserRole;
 }
 
-export interface AdminAppUser extends UserRecord {
+export interface AdminAppUser extends UserInfo {
     role: UserRole;
 }
 
