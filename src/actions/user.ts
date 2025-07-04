@@ -38,7 +38,7 @@ export async function createUserDocument({ uid, email, name }: CreateUserDocumen
 
     return { success: true, message: 'User document created successfully.' };
   } catch (error) {
-    console.error('Error creating user document:', error);
+    console.error('Error creating user document:', error, (error as any)?.stack);
     return { success: false, error: 'Failed to create user document.' };
   }
 }
@@ -51,6 +51,7 @@ export async function getUsers(): Promise<AdminAppUser[]> {
         
         return userRecords.users.map(userRecord => ({
             ...userRecord,
+            toJSON: () => userRecord.toJSON(), // Include the toJSON method
             // Assert role type, defaulting to 'user' if not found in Firestore
             role: (rolesMap.get(userRecord.uid) || 'user') as UserRole,
         }));

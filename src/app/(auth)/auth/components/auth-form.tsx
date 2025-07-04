@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -113,11 +114,25 @@ export function AuthForm() {
     try {
       if (isSignUp) {
         const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
-        await createUserDocument({
+        
+        // Create the user document in Firestore.
+        const result = await createUserDocument({
           uid: userCredential.user.uid,
           email: userCredential.user.email,
         });
+
+        // IMPORTANT: Check if the database document was created successfully.
+        if (!result.success) {
+          // If it fails, inform the user and stop.
+          setFormError(result.error || "Your account was created, but we couldn't set up your profile. Please contact support.");
+          setLoading(false);
+          // NOTE: In a production app, you might want to delete the orphaned auth user here.
+          // await userCredential.user.delete(); 
+          return; // Stop the function here.
+        }
+
         handleAuthSuccess(userCredential.user);
+
       } else {
         const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
         handleAuthSuccess(userCredential.user);
@@ -134,11 +149,17 @@ export function AuthForm() {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       
-      await createUserDocument({
+      const creationResult = await createUserDocument({
         uid: result.user.uid,
         email: result.user.email,
         name: result.user.displayName,
       });
+      
+      if (!creationResult.success) {
+        setFormError(creationResult.error || "Your account was created, but we couldn't set up your profile. Please contact support.");
+        setLoading(false);
+        return;
+      }
 
       handleAuthSuccess(result.user);
     } catch (error: any) {
