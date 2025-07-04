@@ -2,24 +2,27 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Sparkles, Loader2 } from "lucide-react";
 
 import { createProduct } from "@/actions/product";
+import { generateProductDescription } from "@/ai/flows/product-description-generator";
 import { productFormSchema, type ProductFormValues } from "@/lib/schemas/product";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { Loader2 } from "lucide-react";
 
 const categories = ["Skin", "Hair", "Wellness", "Makeup"] as const;
 
 export function ProductForm() {
     const [isPending, startTransition] = useTransition();
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [aiKeywords, setAiKeywords] = useState("");
     const { toast } = useToast();
     const router = useRouter();
 
@@ -38,6 +41,42 @@ export function ProductForm() {
             tags: ""
         },
     });
+
+    const handleGenerateDescription = async () => {
+        const productName = form.getValues("name");
+        if (!productName || !aiKeywords) {
+            toast({
+                title: "Input Required",
+                description: "Please provide a product name and some keywords to generate a description.",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        setIsGenerating(true);
+        try {
+            const result = await generateProductDescription({ productName, keywords: aiKeywords });
+            if (result.description && result.longDescription) {
+                form.setValue("description", result.description, { shouldValidate: true });
+                form.setValue("longDescription", result.longDescription, { shouldValidate: true });
+                toast({
+                    title: "Content Generated!",
+                    description: "The product descriptions have been filled in.",
+                });
+            } else {
+                 throw new Error("AI did not return the expected content.");
+            }
+        } catch (error) {
+            console.error("Error generating product description:", error);
+            toast({
+                title: "Generation Failed",
+                description: "An error occurred while generating the description. Please try again.",
+                variant: "destructive"
+            });
+        } finally {
+            setIsGenerating(false);
+        }
+    };
 
     const onSubmit = (data: ProductFormValues) => {
         startTransition(async () => {
@@ -60,7 +99,36 @@ export function ProductForm() {
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="grid md:grid-cols-3 gap-8">
-                <div className="md:col-span-2">
+                <div className="md:col-span-2 space-y-8">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>AI Content Generator</CardTitle>
+                             <CardDescription>
+                                Provide a product name and some keywords, then let AI write the descriptions for you.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                                <FormLabel>Keywords</FormLabel>
+                                <Input 
+                                    placeholder="e.g., hydrating, for sensitive skin, anti-aging" 
+                                    value={aiKeywords}
+                                    onChange={(e) => setAiKeywords(e.target.value)}
+                                    disabled={isGenerating}
+                                />
+                                <FormDescription>Comma-separated keywords that describe the product.</FormDescription>
+                            </div>
+                            <Button type="button" onClick={handleGenerateDescription} disabled={isGenerating}>
+                                {isGenerating ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Sparkles className="mr-2 h-4 w-4" />
+                                )}
+                                Generate Descriptions
+                            </Button>
+                        </CardContent>
+                    </Card>
+
                     <Card>
                         <CardHeader>
                             <CardTitle>Product Details</CardTitle>
