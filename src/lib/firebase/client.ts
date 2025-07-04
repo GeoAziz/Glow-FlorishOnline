@@ -15,8 +15,12 @@ const firebaseConfig = {
 
 // Check for missing environment variables during development
 if (process.env.NODE_ENV !== 'production') {
-    for (const [key, value] of Object.entries(firebaseConfig)) {
-        if (!value) {
+    const requiredKeys: (keyof typeof firebaseConfig)[] = [
+        'apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId'
+    ];
+
+    for (const key of requiredKeys) {
+        if (!firebaseConfig[key]) {
             const envVarName = `NEXT_PUBLIC_FIREBASE_${key.replace(/([A-Z])/g, '_$1').toUpperCase()}`;
             const errorMessage = `
         
