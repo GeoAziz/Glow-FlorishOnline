@@ -13,6 +13,29 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
+// Check for missing environment variables during development
+if (process.env.NODE_ENV !== 'production') {
+    for (const [key, value] of Object.entries(firebaseConfig)) {
+        if (!value) {
+            const envVarName = `NEXT_PUBLIC_FIREBASE_${key.replace(/([A-Z])/g, '_$1').toUpperCase()}`;
+            const errorMessage = `
+        
+        --------------------------------------------------------------------
+        !!! FIREBASE CLIENT SDK INITIALIZATION FAILED !!!
+        CRITICAL: Missing environment variable ${envVarName}.
+        Please create a .env.local file in the root of your project
+        and add all the necessary Firebase credentials.
+        You can copy the contents of .env.example to get started.
+        Find your credentials in your Firebase project settings.
+        --------------------------------------------------------------------
+      
+      `;
+            throw new Error(errorMessage);
+        }
+    }
+}
+
+
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 const db = getFirestore(app);
