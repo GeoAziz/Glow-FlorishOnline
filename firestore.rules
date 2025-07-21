@@ -4,81 +4,84 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
   
-    function isAuthenticated() {
-      return request.auth != null;
+    // Helper function to check if a user has a specific role
+    function isRole(role) {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
     }
 
-    function isUser(userId) {
+    // Helper function to check if a user is an admin
+    function isAdmin() {
+      return isRole('admin');
+    }
+
+    // Helper function to check if a user is a moderator
+    function isModerator() {
+      return isRole('moderator');
+    }
+    
+    // Helper function to check if the user is the owner of the document
+    function isOwner(userId) {
       return request.auth.uid == userId;
     }
     
-    function isAdmin() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
-    
-    function isModerator() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'moderator';
-    }
-
-    match /users/{userId} {
-      allow read, update: if isUser(userId) || isAdmin();
-      allow create, delete, list: if isAdmin();
-    }
-    
+    // Anyone can read products and categories
     match /products/{productId} {
-      allow read;
-      allow create, update, delete: if isAdmin();
+      allow read: if true;
+      allow write: if isAdmin(); // Only admins can create, update, delete products
     }
     
     match /categories/{categoryId} {
-      allow read;
-      allow write: if isAdmin();
+      allow read: if true;
+      allow write: if isAdmin(); // Only admins can manage categories
     }
-    
-    match /carts/{userId} {
-      allow read, write: if isUser(userId);
-    }
-    
-    match /wishlists/{userId} {
-      allow read, write: if isUser(userId);
-    }
-    
-    match /orders/{orderId} {
-      allow read: if isUser(resource.data.userId) || isAdmin() || isModerator();
-      allow create: if isAuthenticated();
-      allow update: if isAdmin() || isModerator();
-    }
-    
-    match /reviews/{reviewId} {
-      // Any authenticated user can create a review.
-      allow create: if isAuthenticated();
-      
-      // All users can read approved reviews.
-      allow read: if resource.data.status == 'approved';
-      
-      // The user who wrote the review can see it even if it's pending.
-      allow read: if resource.data.status == 'pending' && isUser(resource.data.userId);
 
-      // Moderators and Admins can read all reviews and update status.
-      allow read, update: if isAdmin() || isModerator();
-      
-      // Only Admins can delete reviews.
+    // Users can only read/write their own document. Admins can read any.
+    match /users/{userId} {
+      allow read: if isAdmin() || isOwner(userId);
+      allow write: if isOwner(userId);
+    }
+    
+    // Users can only manage their own cart
+    match /carts/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Users can only manage their own wishlist
+    match /wishlists/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Users can only create and read their own orders. Admins can read all orders.
+    match /orders/{orderId} {
+      allow read: if isAdmin() || get(/databases/$(database)/documents/orders/$(orderId)).data.userId == request.auth.uid;
+      allow create: if request.auth.uid != null; // Checked in transaction logic
+      allow update: if isAdmin(); // Only admins can update order status
+      allow delete: if false; // Orders should not be deleted
+    }
+
+    // Authenticated users can create reviews. Admins/Mods can update them (for approval).
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if request.auth.uid != null && request.resource.data.userId == request.auth.uid;
+      allow update: if isAdmin() || isModerator();
       allow delete: if isAdmin();
     }
     
-    match /newsletter_subscriptions/{email} {
-      allow write; // Anyone can subscribe
-      allow read: if isAdmin();
-    }
-    
+    // Contact messages can be created by anyone, but only read/deleted by admins.
     match /contact_messages/{messageId} {
-      allow create; // Anyone can send a message
-      allow read, update, delete: if isAdmin() || isModerator();
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
     }
     
-    match /blog_posts/{postId} {
-      allow read;
-      allow write: if isAdmin();
+    // Newsletter subscriptions can be created by anyone, but only managed by admins.
+    match /newsletter_subscriptions/{email} {
+       allow create: if true;
+       allow read, delete: if isAdmin();
+    }
+    
+    // Deny all other reads/writes by default
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
