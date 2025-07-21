@@ -1,4 +1,5 @@
 
+
 import { adminDb } from './firebase/admin';
 import type { Product, BlogPost, Review, PendingReview, Order, Testimonial } from "@/types";
 import type { Query, DocumentSnapshot } from 'firebase-admin/firestore';
@@ -78,7 +79,8 @@ export const initialProducts = [
   ...hairCareProducts.map(p => generateProductData(p, "Hair Care")),
   ...bodyCareProducts.map(p => generateProductData(p, "Body Care")),
   ...fragranceAndWellnessProducts.map(p => generateProductData(p, "Fragrance & Wellness")),
-];
+].map((p, index) => ({ ...p, id: `prod_${index + 1}` }));
+
 
 export const initialBlogPosts: Omit<BlogPost, 'id' | 'publishedDate' | 'content'>[] = [
   {
@@ -140,13 +142,13 @@ function convertDocToProduct(doc: DocumentSnapshot): Product {
         throw new Error("Document data is missing");
     }
     
-    if (data.createdAt && typeof data.createdAt.toDate === 'function') {
-        data.createdAt = data.createdAt.toDate();
-    }
-    
+    // Convert Firestore Timestamps to JS Dates
+    const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date();
+
     return {
         id: doc.id,
-        ...data
+        ...data,
+        createdAt,
     } as Product;
 }
 
@@ -278,10 +280,12 @@ export async function getReviewsByProductId(productId: string): Promise<Review[]
 
         return snapshot.docs.map(doc => {
             const data = doc.data();
+            // Convert Firestore Timestamp to a serializable JS Date object
+            const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date();
             return {
                 id: doc.id,
                 ...data,
-                createdAt: data.createdAt.toDate(),
+                createdAt,
             } as Review;
         });
 
@@ -300,10 +304,11 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
     }
     return snapshot.docs.map(doc => {
       const data = doc.data();
+      const publishedDate = data.publishedDate?.toDate ? data.publishedDate.toDate() : new Date();
       return {
         id: doc.id,
         ...data,
-        publishedDate: data.publishedDate.toDate(),
+        publishedDate,
       } as BlogPost;
     });
   } catch (error) {
@@ -322,11 +327,13 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> 
 
     const data = doc.data();
     if (!data) return null;
+    
+    const publishedDate = data.publishedDate?.toDate ? data.publishedDate.toDate() : new Date();
 
     return {
       id: doc.id,
       ...data,
-      publishedDate: data.publishedDate.toDate(),
+      publishedDate,
     } as BlogPost;
   } catch (error) {
     console.error(`Error fetching blog post by slug ${slug}:`, error);
@@ -358,10 +365,11 @@ export async function getPendingReviews(): Promise<PendingReview[]> {
       const reviewData = doc.data();
       const product = productsMap.get(reviewData.productId);
       if (product) {
+        const createdAt = reviewData.createdAt?.toDate ? reviewData.createdAt.toDate() : new Date();
         allPendingReviews.push({
           id: doc.id,
           ...reviewData,
-          createdAt: reviewData.createdAt.toDate(),
+          createdAt,
           productName: product.name,
           productSlug: product.slug,
         } as PendingReview);
@@ -403,10 +411,11 @@ export async function getAdminDashboardStats() {
         const recentOrdersSnapshot = await adminDb.collection('orders').orderBy('createdAt', 'desc').limit(5).get();
         const recentOrders = recentOrdersSnapshot.docs.map(doc => {
             const data = doc.data();
+            const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date();
             return {
                 id: doc.id,
                 ...data,
-                createdAt: data.createdAt.toDate(),
+                createdAt,
             } as Order;
         });
 
@@ -466,3 +475,44 @@ export async function getAnalyticsData() {
 export async function getTestimonials(): Promise<Testimonial[]> {
     return Promise.resolve(testimonials);
 }
+
+// Add a function to simulate fetching initial orders for seeding
+export const initialOrders = [
+  {
+    userId: "simulated_user_1",
+    items: [
+      { productId: "prod_1", name: "Snail Repair Cream", price: 199, quantity: 1, image: "https://placehold.co/600x600.png?text=Snail+Repair+Cream" },
+      { productId: "prod_12", name: "Castor Oil Scalp Tonic", price: 159, quantity: 1, image: "https://placehold.co/600x600.png?text=Castor+Oil+Scalp+Tonic" }
+    ],
+    total: 358.00,
+    shippingAddress: {
+      fullName: "Jane Doe",
+      addressLine1: "123 Main St",
+      city: "Anytown",
+      state: "CA",
+      postalCode: "12345",
+      country: "USA"
+    },
+    status: 'delivered',
+    paymentMethod: 'paypal',
+    paymentStatus: 'paid',
+  },
+  {
+    userId: "simulated_user_2",
+    items: [
+      { productId: "prod_23", name: "Sugar Glow Scrub", price: 129, quantity: 2, image: "https://placehold.co/600x600.png?text=Sugar+Glow+Scrub" }
+    ],
+    total: 258.00,
+    shippingAddress: {
+      fullName: "John Smith",
+      addressLine1: "456 Oak Ave",
+      city: "Otherville",
+      state: "NY",
+      postalCode: "67890",
+      country: "USA"
+    },
+    status: 'shipped',
+    paymentMethod: 'delivery',
+    paymentStatus: 'unpaid',
+  }
+];
