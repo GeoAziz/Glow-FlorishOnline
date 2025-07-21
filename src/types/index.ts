@@ -1,4 +1,5 @@
 
+
 import type { User as FirebaseUser } from "firebase/auth";
 import type { UserInfo } from 'firebase-admin/auth';
 
@@ -22,7 +23,7 @@ export type Review = {
   text: string;
   author: string;
   status: 'pending' | 'approved' | 'rejected';
-  createdAt: Date;
+  createdAt: string; // Changed to string for serialization
 };
 
 export type PendingReview = Review & {

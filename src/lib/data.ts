@@ -280,8 +280,8 @@ export async function getReviewsByProductId(productId: string): Promise<Review[]
 
         return snapshot.docs.map(doc => {
             const data = doc.data();
-            // Convert Firestore Timestamp to a serializable JS Date object
-            const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date();
+            // Convert Firestore Timestamp to a serializable ISO string
+            const createdAt = data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString();
             return {
                 id: doc.id,
                 ...data,
@@ -365,7 +365,7 @@ export async function getPendingReviews(): Promise<PendingReview[]> {
       const reviewData = doc.data();
       const product = productsMap.get(reviewData.productId);
       if (product) {
-        const createdAt = reviewData.createdAt?.toDate ? reviewData.createdAt.toDate() : new Date();
+        const createdAt = reviewData.createdAt?.toDate ? reviewData.createdAt.toDate().toISOString() : new Date().toISOString();
         allPendingReviews.push({
           id: doc.id,
           ...reviewData,
