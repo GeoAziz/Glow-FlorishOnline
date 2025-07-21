@@ -74,7 +74,7 @@ export default function OrderHistoryPage() {
                     {order.status}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-right">${order.total.toFixed(2)}</TableCell>
+                <TableCell className="text-right">{order.total.toFixed(2)} SEK</TableCell>
                 <TableCell className="text-right">
                   <Button asChild variant="outline" size="sm">
                     <Link href={`/order-confirmation/${order.id}`}>View Order</Link>

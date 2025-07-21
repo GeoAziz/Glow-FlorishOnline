@@ -67,7 +67,7 @@ export default async function AdminProductsPage() {
                 <TableCell>
                   <Badge variant="secondary">{product.category}</Badge>
                 </TableCell>
-                <TableCell>${product.price.toFixed(2)}</TableCell>
+                <TableCell>{product.price.toFixed(2)} SEK</TableCell>
                 <TableCell>{product.stock}</TableCell>
                 <TableCell className="text-right">
                   <ProductActionsCell productId={product.id} />

@@ -51,7 +51,7 @@ export function CartClient() {
             </Link>
             <div className="flex-grow ml-4">
                 <Link href={`/product/${item.product.slug}`} className="font-semibold hover:text-primary">{item.product.name}</Link>
-                <p className="text-sm text-muted-foreground">${item.product.price.toFixed(2)}</p>
+                <p className="text-sm text-muted-foreground">{item.product.price.toFixed(2)} SEK</p>
             </div>
              <div className="flex items-center border rounded-md">
                 <Button variant="ghost" size="icon" onClick={() => updateQuantity(item.product.id, item.quantity - 1)}>
@@ -62,7 +62,7 @@ export function CartClient() {
                     <Plus className="h-4 w-4" />
                 </Button>
             </div>
-            <p className="w-24 text-right font-semibold">${(item.product.price * item.quantity).toFixed(2)}</p>
+            <p className="w-24 text-right font-semibold">{(item.product.price * item.quantity).toFixed(2)} SEK</p>
             <Button variant="ghost" size="icon" className="ml-4" onClick={() => removeFromCart(item.product.id)}>
                 <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
             </Button>
@@ -78,16 +78,16 @@ export function CartClient() {
             <CardContent className="space-y-4">
                 <div className="flex justify-between">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span>${cartTotal.toFixed(2)}</span>
+                    <span>{cartTotal.toFixed(2)} SEK</span>
                 </div>
                 <div className="flex justify-between">
                     <span className="text-muted-foreground">Shipping</span>
-                    <span>$5.00</span>
+                    <span>50.00 SEK</span>
                 </div>
                 <Separator />
                  <div className="flex justify-between font-bold text-lg">
                     <span>Total</span>
-                    <span>${(cartTotal + 5).toFixed(2)}</span>
+                    <span>{(cartTotal + 50).toFixed(2)} SEK</span>
                 </div>
             </CardContent>
             <CardFooter>

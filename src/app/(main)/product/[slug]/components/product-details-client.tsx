@@ -153,7 +153,7 @@ export function ProductDetailsClient({ product, reviews }: ProductDetailsClientP
                 {product.stock > 0 ? 'In Stock' : 'Out of Stock'}
             </span>
         </div>
-        <p className="text-3xl font-bold font-headline text-primary mb-6">${product.price.toFixed(2)}</p>
+        <p className="text-3xl font-bold font-headline text-primary mb-6">{product.price.toFixed(2)} SEK</p>
         
         <p className="text-muted-foreground leading-relaxed">{product.description}</p>
 

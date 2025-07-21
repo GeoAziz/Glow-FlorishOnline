@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from "next/image";
@@ -87,7 +88,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
         <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{product.description}</p>
       </CardContent>
       <CardFooter className="p-4 pt-0 flex justify-between items-center">
-        <p className="font-bold text-lg">${product.price.toFixed(2)}</p>
+        <p className="font-bold text-lg">{product.price.toFixed(2)} SEK</p>
         <Button 
           size="icon" 
           variant="outline" 

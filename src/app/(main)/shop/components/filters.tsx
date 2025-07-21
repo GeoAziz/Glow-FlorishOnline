@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Checkbox } from "@/components/ui/checkbox";
@@ -46,13 +47,13 @@ export function Filters({
           defaultValue={[maxPrice]}
           max={maxPrice}
           min={0}
-          step={1}
+          step={10}
           value={[priceRange[1]]}
           onValueChange={(value) => onPriceChange([0, value[0]])}
         />
         <div className="flex justify-between text-sm text-muted-foreground mt-2">
-          <span>$0</span>
-          <span>${priceRange[1]}</span>
+          <span>0 SEK</span>
+          <span>{priceRange[1]} SEK</span>
         </div>
       </div>
     </aside>

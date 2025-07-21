@@ -74,7 +74,7 @@ export default async function AdminOrdersPage() {
                         <span className="text-xs text-muted-foreground capitalize">{order.paymentMethod}</span>
                     </div>
                 </TableCell>
-                <TableCell className="font-medium text-right">${order.total.toFixed(2)}</TableCell>
+                <TableCell className="font-medium text-right">{order.total.toFixed(2)} SEK</TableCell>
                 <TableCell className="text-right">
                   <OrderActionsCell orderId={order.id} currentStatus={order.status} />
                 </TableCell>

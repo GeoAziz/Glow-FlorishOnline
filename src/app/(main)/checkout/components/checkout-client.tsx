@@ -47,6 +47,9 @@ export function CheckoutClient() {
 
   const form = useForm<ShippingFormValues>({
     resolver: zodResolver(shippingAddressSchema),
+    defaultValues: {
+      country: "Sweden"
+    }
   });
   
   useEffect(() => {
@@ -74,7 +77,7 @@ export function CheckoutClient() {
         image: item.product.images[0]
     }));
     
-    const total = cartTotal + 5.00; // Including shipping
+    const total = cartTotal + 50.00; // Including shipping
 
     const result = await createOrder({
         userId: user.uid,
@@ -136,7 +139,7 @@ export function CheckoutClient() {
   }
 
   return (
-    <PayPalScriptProvider options={{ clientId: PAYPAL_CLIENT_ID }}>
+    <PayPalScriptProvider options={{ clientId: PAYPAL_CLIENT_ID, currency: "SEK" }}>
         <form onSubmit={form.handleSubmit(handlePayOnDelivery)} className="grid lg:grid-cols-3 gap-8 lg:gap-12">
             {/* Shipping & Payment */}
             <div className="lg:col-span-2 space-y-8">
@@ -220,23 +223,23 @@ export function CheckoutClient() {
                                         <p className="font-semibold">{item.product.name}</p>
                                         <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
                                     </div>
-                                    <p className="font-semibold">${(item.product.price * item.quantity).toFixed(2)}</p>
+                                    <p className="font-semibold">{(item.product.price * item.quantity).toFixed(2)} SEK</p>
                                 </div>
                             ))}
                         </div>
                         <Separator />
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Subtotal</span>
-                            <span>${cartTotal.toFixed(2)}</span>
+                            <span>{cartTotal.toFixed(2)} SEK</span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Shipping</span>
-                            <span>$5.00</span>
+                            <span>50.00 SEK</span>
                         </div>
                         <Separator />
                         <div className="flex justify-between font-bold text-lg">
                             <span>Total</span>
-                            <span>${(cartTotal + 5).toFixed(2)}</span>
+                            <span>{(cartTotal + 50).toFixed(2)} SEK</span>
                         </div>
                     </CardContent>
                     <CardFooter className="flex flex-col gap-2">
@@ -258,7 +261,8 @@ export function CheckoutClient() {
                                     return actions.order.create({
                                         purchase_units: [{
                                             amount: {
-                                                value: (cartTotal + 5.00).toFixed(2),
+                                                value: (cartTotal + 50.00).toFixed(2),
+                                                currency_code: 'SEK'
                                             }
                                         }]
                                     });

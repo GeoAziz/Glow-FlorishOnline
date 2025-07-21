@@ -48,13 +48,13 @@ export default async function OrderConfirmationPage({ params }: OrderConfirmatio
                                 <p className="font-semibold">{item.name}</p>
                                 <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
                             </div>
-                            <p className="font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
+                            <p className="font-semibold">{(item.price * item.quantity).toFixed(2)} SEK</p>
                         </div>
                     ))}
                     <Separator />
                     <div className="flex justify-between font-bold text-lg">
                         <span>Total Paid</span>
-                        <span>${order.total.toFixed(2)}</span>
+                        <span>{order.total.toFixed(2)} SEK</span>
                     </div>
                 </CardContent>
             </Card>
