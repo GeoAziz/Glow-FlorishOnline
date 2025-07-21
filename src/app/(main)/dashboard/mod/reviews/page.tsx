@@ -39,7 +39,7 @@ export default async function ReviewModerationPage() {
                                         ))}
                                     </div>
                                 </div>
-                                <ReviewActions productId={review.productId} reviewId={review.id} />
+                                <ReviewActions reviewId={review.id} />
                             </CardHeader>
                             <CardContent>
                                 <p className="italic">"{review.text}"</p>

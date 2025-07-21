@@ -5,195 +5,79 @@ import type { Query, DocumentSnapshot } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { format } from 'date-fns';
 
-// This data is now used for seeding the database only.
-// See scripts/seed-db.ts
-export const initialProducts: (Omit<Product, 'reviews' | 'createdAt'> & { reviews: Omit<Review, 'createdAt' | 'id'>[] })[] = [
-  {
-    id: "1",
-    slug: "radiant-glow-serum",
-    name: "Radiant Glow Serum",
-    description: "A silky, lightweight serum to boost radiance and hydration.",
-    longDescription: "Our Radiant Glow Serum is a potent blend of Vitamin C, Hyaluronic Acid, and botanical antioxidants. It works to brighten the complexion, reduce the appearance of fine lines, and deeply hydrate the skin for a luminous, healthy glow. Suitable for all skin types.",
-    ingredients: ["Vitamin C", "Hyaluronic Acid", "Green Tea Extract", "Aloe Vera"],
-    price: 68.00,
-    images: ["https://placehold.co/600x600.png", "https://placehold.co/600x600.png", "https://placehold.co/600x600.png"],
-    category: "Skin",
-    tags: ["Serum", "Hydration", "Brightening"],
-    reviews: [
-      { rating: 5, text: "Absolutely amazing! My skin has never looked better.", author: "Chloe M.", status: 'approved' },
-      { rating: 5, text: "A holy grail product. Worth every penny.", author: "Isabella R.", status: 'approved' },
-    ],
-    stock: 25
-  },
-  {
-    id: "2",
-    slug: "hydrating-cream-cleanser",
-    name: "Hydrating Cream Cleanser",
-    description: "Gently removes impurities without stripping the skin.",
-    longDescription: "This soap-free, pH-balanced cream cleanser melts away makeup and impurities while nourishing the skin with a blend of ceramides, oat extract, and avocado oil. Leaves skin feeling soft, supple, and perfectly clean.",
-    ingredients: ["Ceramides", "Oat Kernel Extract", "Avocado Oil", "Glycerin"],
-    price: 35.00,
-    images: ["https://placehold.co/600x600.png", "https://placehold.co/600x600.png"],
-    category: "Skin",
-    tags: ["Cleanser", "Gentle", "Hydration"],
-    reviews: [
-      { rating: 5, text: "So gentle on my sensitive skin. I love it.", author: "Sophia T.", status: 'approved' },
-    ],
-    stock: 50
-  },
-  {
-    id: "3",
-    slug: "silk-finish-hair-mask",
-    name: "Silk Finish Hair Mask",
-    description: "Deeply conditions for soft, manageable, and shiny hair.",
-    longDescription: "Revive dry, damaged hair with our intensive Silk Finish Hair Mask. Formulated with Argan Oil, Shea Butter, and Keratin, this treatment deeply penetrates the hair shaft to repair, strengthen, and moisturize, leaving you with silky smooth results.",
-    ingredients: ["Argan Oil", "Shea Butter", "Hydrolyzed Keratin", "Jojoba Oil"],
-    price: 45.00,
-    images: ["https://placehold.co/600x600.png", "https://placehold.co/600x600.png"],
-    category: "Hair",
-    tags: ["Hair Mask", "Repair", "Conditioning"],
-    reviews: [],
-    stock: 30
-  },
-  {
-    id: "4",
-    slug: "luminous-touch-foundation",
-    name: "Luminous Touch Foundation",
-    description: "A buildable, medium-coverage foundation with a natural finish.",
-    longDescription: "Achieve a flawless, second-skin finish with our Luminous Touch Foundation. The lightweight, breathable formula provides buildable medium coverage that evens out skin tone and blurs imperfections. Infused with skin-loving ingredients, it's makeup that's good for your skin.",
-    ingredients: ["Niacinamide", "Squalane", "Titanium Dioxide", "Mica"],
-    price: 52.00,
-    images: ["https://placehold.co/600x600.png", "https://placehold.co/600x600.png"],
-    category: "Makeup",
-    tags: ["Foundation", "Medium Coverage", "Natural Finish"],
-    reviews: [
-      { rating: 4, text: "Great coverage and feels light on the skin.", author: "Olivia P.", status: 'approved' },
-    ],
-    stock: 40
-  },
-  {
-    id: "5",
-    slug: "calming-herbal-tea-blend",
-    name: "Calming Herbal Tea Blend",
-    description: "A soothing blend of organic herbs to promote relaxation.",
-    longDescription: "Unwind and de-stress with our Calming Herbal Tea Blend. This caffeine-free infusion features organic chamomile, lavender, and lemon balm, traditionally used to calm the mind and body. Perfect for a peaceful evening ritual.",
-    ingredients: ["Organic Chamomile", "Organic Lavender", "Organic Lemon Balm", "Organic Spearmint"],
-    price: 22.00,
-    images: ["https://placehold.co/600x600.png", "https://placehold.co/600x600.png"],
-    category: "Wellness",
-    tags: ["Tea", "Relaxation", "Organic"],
-    reviews: [
-       { rating: 5, text: "The perfect way to end my day. So delicious and calming.", author: "Ava G.", status: 'approved' },
-    ],
-    stock: 100
-  },
-  {
-    id: "6",
-    slug: "revitalizing-eye-cream",
-    name: "Revitalizing Eye Cream",
-    description: "Reduces dark circles and puffiness for a brighter look.",
-    longDescription: "Awaken tired eyes with our Revitalizing Eye Cream. This potent formula combines caffeine to reduce puffiness, Vitamin K to diminish dark circles, and peptides to firm the delicate skin around the eyes. Look refreshed and well-rested, even when you're not.",
-    ingredients: ["Caffeine", "Vitamin K", "Peptide Complex", "Cucumber Extract"],
-    price: 55.00,
-    images: ["https://placehold.co/600x600.png", "https://placehold.co/600x600.png"],
-    category: "Skin",
-    tags: ["Eye Cream", "Dark Circles", "Puffiness"],
-    reviews: [],
-    stock: 15
-  },
-   {
-    id: "7",
-    slug: "volumizing-dry-shampoo",
-    name: "Volumizing Dry Shampoo",
-    description: "Instantly refreshes hair and adds volume between washes.",
-    longDescription: "Extend the life of your blowout with our Volumizing Dry Shampoo. Formulated with rice starch to absorb oil and add texture, this invisible spray leaves no white residue. Hair is left feeling clean, refreshed, and full of body.",
-    ingredients: ["Rice Starch", "Tapioca Starch", "Alcohol Denat.", "Silica"],
-    price: 28.00,
-    images: ["https://placehold.co/600x600.png", "https://placehold.co/600x600.png"],
-    category: "Hair",
-    tags: ["Dry Shampoo", "Volume", "Styling"],
-    reviews: [
-      { rating: 5, text: "Best dry shampoo I've ever used. No white cast!", author: "Mia L.", status: 'approved' },
-    ],
-    stock: 60
-  },
-  {
-    id: "8",
-    slug: "velvet-matte-lipstick",
-    name: "Velvet Matte Lipstick",
-    description: "A long-wearing, highly pigmented lipstick with a matte finish.",
-    longDescription: "Make a statement with our Velvet Matte Lipstick. This creamy, non-drying formula glides on smoothly and delivers intense, single-swipe color. Enriched with Vitamin E and Jojoba Oil, it keeps your lips comfortable all day long. Available in 8 stunning shades.",
-    ingredients: ["Dimethicone", "Jojoba Oil", "Vitamin E", "Kaolin"],
-    price: 30.00,
-    images: ["https://placehold.co/600x600.png", "https://placehold.co/600x600.png"],
-    category: "Makeup",
-    tags: ["Lipstick", "Matte", "Long-wearing"],
-    reviews: [
-      { rating: 5, text: "The color 'Rose Petal' is my perfect nude.", author: "Grace W.", status: 'approved' },
-      { rating: 4, text: "Very comfortable for a matte lipstick.", author: "Lily C.", status: 'approved' },
-    ],
-    stock: 80
-  },
-  {
-    id: "9",
-    slug: "nourishing-body-oil",
-    name: "Nourishing Body Oil",
-    description: "A fast-absorbing oil for soft, glowing skin.",
-    longDescription: "Lock in moisture with our luxurious Nourishing Body Oil. A blend of sweet almond, apricot kernel, and jojoba oils absorbs quickly to hydrate and soften the skin without feeling greasy. Lightly scented with neroli and bergamot.",
-    ingredients: ["Sweet Almond Oil", "Apricot Kernel Oil", "Jojoba Oil", "Vitamin E"],
-    price: 42.00,
-    images: ["https://placehold.co/600x600.png", "https://placehold.co/600x600.png"],
-    category: "Wellness",
-    tags: ["Body Oil", "Hydration", "Nourishing"],
-    reviews: [],
-    stock: 55
-  },
-  {
-    id: "10",
-    slug: "purifying-clay-mask",
-    name: "Purifying Clay Mask",
-    description: "Detoxifies pores and refines skin texture.",
-    longDescription: "A weekly treatment to reset your skin. This mask uses a blend of bentonite and kaolin clays to draw out impurities, while salicylic acid helps to exfoliate and unclog pores. Aloe vera and chamomile ensure the skin is left feeling calm, not stripped.",
-    ingredients: ["Bentonite Clay", "Kaolin Clay", "Salicylic Acid", "Aloe Vera"],
-    price: 38.00,
-    images: ["https://placehold.co/600x600.png", "https://placehold.co/600x600.png"],
-    category: "Skin",
-    tags: ["Mask", "Detox", "Pore Refining"],
-    reviews: [
-       { rating: 5, text: "My pores have never been so clean!", author: "Jessica P.", status: 'approved' },
-    ],
-    stock: 20
-  },
-  {
-    id: "11",
-    slug: "brow-defining-pencil",
-    name: "Brow Defining Pencil",
-    description: "A fine-tipped pencil for natural, defined brows.",
-    longDescription: "Shape, fill, and define your brows with precision. Our Brow Defining Pencil has an ultra-fine tip for creating hair-like strokes and a built-in spoolie for seamless blending. The formula is long-wearing and smudge-proof.",
-    ingredients: ["Hydrogenated Castor Oil", "Iron Oxides", "Mica", "Candelilla Wax"],
-    price: 24.00,
-    images: ["https://placehold.co/600x600.png", "https://placehold.co/600x600.png"],
-    category: "Makeup",
-    tags: ["Eyebrows", "Pencil", "Definition"],
-    reviews: [],
-    stock: 70
-  },
-  {
-    id: "12",
-    slug: "strengthening-shampoo",
-    name: "Strengthening Shampoo",
-    description: "Gently cleanses while fortifying weak, brittle hair.",
-    longDescription: "Build stronger, more resilient hair with every wash. Our Strengthening Shampoo is powered by biotin and hydrolyzed wheat protein to reduce breakage and promote healthy growth. The sulfate-free formula cleanses gently without stripping natural oils.",
-    ingredients: ["Biotin", "Hydrolyzed Wheat Protein", "Chamomile Extract", "Pro-Vitamin B5"],
-    price: 32.00,
-    images: ["https://placehold.co/600x600.png", "https://placehold.co/600x600.png"],
-    category: "Hair",
-    tags: ["Shampoo", "Strengthening", "Sulfate-Free"],
-    reviews: [
-       { rating: 4, text: "My hair feels stronger after a few weeks of use.", author: "Rachel G.", status: 'approved' }
-    ],
-    stock: 45
-  },
+const faceCareProducts = [
+  { brand: "Glow & Flourish", name: "Snail Repair Cream", price: 199 },
+  { brand: "Glow & Flourish", name: "Vitamin C Serum", price: 249 },
+  { brand: "Glow & Flourish", name: "Hydrating Gel Moisturizer", price: 179 },
+  { brand: "Glow & Flourish", name: "Clay Detox Mask", price: 149 },
+  { brand: "Glow & Flourish", name: "Niacinamide Booster", price: 229 },
+  { brand: "Glow & Flourish", name: "Hyaluronic Acid Serum", price: 199 },
+  { brand: "Glow & Flourish", name: "Glow Night Cream", price: 259 },
+  { brand: "Glow & Flourish", name: "Green Tea Toner", price: 129 },
+  { brand: "Glow & Flourish", name: "Gentle Cleansing Foam", price: 139 },
+  { brand: "Glow & Flourish", name: "Spot Treatment Roll-On", price: 169 },
+];
+
+const hairCareProducts = [
+  { brand: "Glow & Flourish", name: "Shea Butter Leave-In", price: 189 },
+  { brand: "Glow & Flourish", name: "Castor Oil Scalp Tonic", price: 159 },
+  { brand: "Glow & Flourish", name: "Curl Defining Gel", price: 169 },
+  { brand: "Glow & Flourish", name: "Rice Water Repair Mist", price: 149 },
+  { brand: "Glow & Flourish", name: "Avocado Hair Mask", price: 199 },
+  { brand: "Glow & Flourish", name: "Keratin Smoothing Cream", price: 219 },
+  { brand: "Glow & Flourish", name: "Aloe Vera Conditioner", price: 179 },
+  { brand: "Glow & Flourish", name: "Anti-Dandruff Herbal Shampoo", price: 139 },
+  { brand: "Glow & Flourish", name: "Silk Protein Serum", price: 249 },
+  { brand: "Glow & Flourish", name: "Edge Control Paste", price: 129 },
+];
+
+const bodyCareProducts = [
+  { brand: "Glow & Flourish", name: "Raw Shea Butter Tub", price: 99 },
+  { brand: "Glow & Flourish", name: "Brightening Body Lotion", price: 149 },
+  { brand: "Glow & Flourish", name: "Sugar Glow Scrub", price: 129 },
+  { brand: "Glow & Flourish", name: "Cocoa Butter Stick", price: 109 },
+  { brand: "Glow & Flourish", name: "De-pigmentation Cream", price: 179 },
+  { brand: "Glow & Flourish", name: "Skin Repair Oil", price: 139 },
+  { brand: "Glow & Flourish", name: "Aromatherapy Shower Gel", price: 119 },
+  { brand: "Glow & Flourish", name: "Underarm Detox Cream", price: 129 },
+  { brand: "Glow & Flourish", name: "Stretch Mark Treatment Balm", price: 189 },
+  { brand: "Glow & Flourish", name: "Sunscreen Lotion SPF50", price: 159 },
+];
+
+const fragranceAndWellnessProducts = [
+  { brand: "Glow & Flourish", name: "Cherry Blooca Eau de Parfum", price: 279 },
+  { brand: "Glow & Flourish", name: "Lavender Relaxation Mist", price: 139 },
+  { brand: "Glow & Flourish", name: "Vanilla Body Spray", price: 119 },
+  { brand: "Glow & Flourish", name: "Oud & Amber Blend", price: 319 },
+  { brand: "Glow & Flourish", name: "Essential Oil Trio Kit", price: 189 },
+  { brand: "Glow & Flourish", name: "Cedar & Patchouli Diffuser", price: 169 },
+  { brand: "Glow & Flourish", name: "Citrus Burst Room Mist", price: 139 },
+  { brand: "Glow & Flourish", name: "Jasmine Roll-on Perfume", price: 109 },
+  { brand: "Glow & Flourish", name: "Minty Breath Spray", price: 89 },
+  { brand: "Glow & Flourish", name: "Detox Bath Salt Pouch", price: 149 },
+];
+
+const generateProductData = (product: { brand: string; name: string; price: number }, category: Product['category']): Omit<Product, 'id' | 'createdAt'> => {
+  const slug = product.name.toLowerCase().replace(/\s+/g, '-');
+  return {
+    ...product,
+    slug,
+    category,
+    description: `High-quality ${product.name.toLowerCase()} from ${product.brand}.`,
+    longDescription: `Discover the benefits of our ${product.name.toLowerCase()}. Made with the finest ingredients to ensure the best results for your ${category.toLowerCase().split(' ')[0]} care routine.`,
+    ingredients: ["Aqua", "Glycerin", "Natural Extracts"],
+    images: [`https://placehold.co/600x600.png?text=${encodeURIComponent(product.name)}`],
+    stock: Math.floor(Math.random() * 100) + 10,
+    rating: Math.round((Math.random() * 1.5 + 3.5) * 10) / 10, // Random rating between 3.5 and 5.0
+    tags: [category.split(' ')[0], "New"],
+  };
+};
+
+export const initialProducts = [
+  ...faceCareProducts.map(p => generateProductData(p, "Face Care")),
+  ...hairCareProducts.map(p => generateProductData(p, "Hair Care")),
+  ...bodyCareProducts.map(p => generateProductData(p, "Body Care")),
+  ...fragranceAndWellnessProducts.map(p => generateProductData(p, "Fragrance & Wellness")),
 ];
 
 export const initialBlogPosts: Omit<BlogPost, 'id' | 'publishedDate' | 'content'>[] = [
@@ -232,95 +116,15 @@ export const blogPostContent: {[key: string]: string} = {
   'the-art-of-the-at-home-facial': 'Transform your bathroom into a personal sanctuary with this guide to the perfect at-home facial. It\'s a wonderful way to de-stress and give your skin the focused attention it deserves.\n\n**1. Set the Mood**\nStart by creating a relaxing atmosphere. Light a scented candle, put on some calming music, and make sure you have clean, fluffy towels ready. This is about the experience as much as the results.\n\n**2. Double Cleanse**\nBegin with an oil-based cleanser to melt away makeup, sunscreen, and excess sebum. Follow up with a water-based cleanser (cream, gel, or foam) to purify the skin and remove any remaining residue. This two-step process ensures your skin is impeccably clean.\n\n**3. Exfoliate Gently**\nNext, slough off dead skin cells to reveal a brighter complexion. You can use a gentle physical scrub with fine particles or a chemical exfoliant with AHAs (like glycolic or lactic acid) or BHAs (salicylic acid). Don\'t overdo it—a few minutes is all you need.\n\n**4. Steam Your Face**\nLean over a bowl of hot water with a towel over your head for 5-10 minutes. Steaming helps to open up your pores, making them more receptive to the treatments that follow. You can add a few drops of essential oil like lavender for an aromatherapy boost.\n\n**5. Apply a Face Mask**\nChoose a mask based on your skin\'s needs. A clay mask is great for detoxifying oily skin, while a hydrating mask with hyaluronic acid is perfect for dry skin. Apply an even layer and relax for 10-15 minutes.\n\n**6. Tone and Moisturize**\nAfter rinsing off the mask, apply your favorite toner, serum, and moisturizer to lock in all the goodness. Gently massage the products into your skin using upward strokes to finish your luxurious at-home facial.',
 };
 
-export const initialOrders: Omit<Order, 'id' | 'createdAt'>[] = [
-    {
-        userId: 'placeholder-user-1',
-        items: [
-            { productId: '1', name: 'Radiant Glow Serum', price: 68.00, quantity: 1, image: 'https://placehold.co/600x600.png' },
-            { productId: '4', name: 'Luminous Touch Foundation', price: 52.00, quantity: 1, image: 'https://placehold.co/600x600.png' }
-        ],
-        total: 125.00, // 68 + 52 + 5 shipping
-        shippingAddress: {
-            fullName: 'Olivia Chen',
-            addressLine1: '456 Oak Avenue',
-            city: 'San Francisco',
-            state: 'CA',
-            postalCode: '94102',
-            country: 'USA'
-        },
-        status: 'delivered',
-        paymentMethod: 'paypal',
-        paymentStatus: 'paid',
-        paymentDetails: { paypalOrderId: 'test-paypal-id-1' }
-    },
-    {
-        userId: 'placeholder-user-2',
-        items: [
-            { productId: '3', name: 'Silk Finish Hair Mask', price: 45.00, quantity: 2, image: 'https://placehold.co/600x600.png' }
-        ],
-        total: 95.00, // 45*2 + 5 shipping
-        shippingAddress: {
-            fullName: 'Benjamin Carter',
-            addressLine1: '789 Pine Street',
-            city: 'New York',
-            state: 'NY',
-            postalCode: '10001',
-            country: 'USA'
-        },
-        status: 'shipped',
-        paymentMethod: 'paypal',
-        paymentStatus: 'paid',
-        paymentDetails: { paypalOrderId: 'test-paypal-id-2' }
-    },
-    {
-        userId: 'placeholder-user-1',
-        items: [
-            { productId: '5', name: 'Calming Herbal Tea Blend', price: 22.00, quantity: 1, image: 'https://placehold.co/600x600.png' },
-            { productId: '9', name: 'Nourishing Body Oil', price: 42.00, quantity: 1, image: 'https://placehold.co/600x600.png' }
-        ],
-        total: 69.00, // 22 + 42 + 5 shipping
-        shippingAddress: {
-            fullName: 'Olivia Chen',
-            addressLine1: '456 Oak Avenue',
-            city: 'San Francisco',
-            state: 'CA',
-            postalCode: '94102',
-            country: 'USA'
-        },
-        status: 'processing',
-        paymentMethod: 'delivery',
-        paymentStatus: 'unpaid'
-    },
-     {
-        userId: 'placeholder-user-3',
-        items: [
-            { productId: '10', name: 'Purifying Clay Mask', price: 38.00, quantity: 1, image: 'https://placehold.co/600x600.png' },
-        ],
-        total: 43.00, // 38 + 5 shipping
-        shippingAddress: {
-            fullName: 'Sophia Rodriguez',
-            addressLine1: '123 Maple Drive',
-            city: 'Austin',
-            state: 'TX',
-            postalCode: '78704',
-            country: 'USA'
-        },
-        status: 'pending',
-        paymentMethod: 'paypal',
-        paymentStatus: 'paid',
-        paymentDetails: { paypalOrderId: 'test-paypal-id-3' }
-    },
-];
-
 const testimonials: Testimonial[] = [
     {
       name: "Jessica L.",
-      text: "The Radiant Glow Serum has completely transformed my skin. I've never felt more confident!",
+      text: "The Snail Repair Cream has completely transformed my skin. I've never felt more confident!",
       rating: 5,
     },
     {
       name: "Sarah K.",
-      text: "I'm in love with the minimalist packaging and the quality of the products. The hair mask is a must-try.",
+      text: "I'm in love with the minimalist packaging and the quality of the products. The Avocado Hair Mask is a must-try.",
       rating: 5,
     },
     {
@@ -336,16 +140,6 @@ function convertDocToProduct(doc: DocumentSnapshot): Product {
         throw new Error("Document data is missing");
     }
     
-    if (data.reviews && Array.isArray(data.reviews)) {
-        data.reviews = data.reviews.map((review: any) => {
-            const newReview = { ...review };
-            if (review.createdAt && typeof review.createdAt.toDate === 'function') {
-                newReview.createdAt = review.createdAt.toDate();
-            }
-            return newReview;
-        });
-    }
-
     if (data.createdAt && typeof data.createdAt.toDate === 'function') {
         data.createdAt = data.createdAt.toDate();
     }
@@ -355,7 +149,6 @@ function convertDocToProduct(doc: DocumentSnapshot): Product {
         ...data
     } as Product;
 }
-
 
 export async function getProducts({
     searchQuery,
@@ -375,8 +168,6 @@ export async function getProducts({
       query = query.where('category', '==', category);
     }
     
-    // We fetch all products (or by category) and then filter by search and price in code
-    // This is less efficient for huge datasets but avoids complex Firestore indexing
     const snapshot = await query.orderBy('name').get();
     
     if (snapshot.empty) {
@@ -472,6 +263,35 @@ export async function getCategories(): Promise<string[]> {
   }
 }
 
+export async function getReviewsByProductId(productId: string): Promise<Review[]> {
+    if (!productId) return [];
+    try {
+        const snapshot = await adminDb.collection('reviews')
+            .where('productId', '==', productId)
+            .where('status', '==', 'approved')
+            .orderBy('createdAt', 'desc')
+            .get();
+
+        if (snapshot.empty) {
+            return [];
+        }
+
+        return snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                createdAt: data.createdAt.toDate(),
+            } as Review;
+        });
+
+    } catch (error) {
+        console.error('Error fetching reviews:', error);
+        return [];
+    }
+}
+
+
 export async function getBlogPosts(): Promise<BlogPost[]> {
   try {
     const snapshot = await adminDb.collection('blog_posts').orderBy('publishedDate', 'desc').get();
@@ -517,33 +337,36 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> 
 
 export async function getPendingReviews(): Promise<PendingReview[]> {
   try {
-    const productsSnapshot = await adminDb.collection('products').get();
-    if (productsSnapshot.empty) {
+    const reviewsSnapshot = await adminDb.collection('reviews')
+      .where('status', '==', 'pending')
+      .orderBy('createdAt', 'desc')
+      .get();
+      
+    if (reviewsSnapshot.empty) {
       return [];
     }
 
+    const productIds = [...new Set(reviewsSnapshot.docs.map(doc => doc.data().productId))];
+    if (productIds.length === 0) return [];
+    
+    const products = await getProductsByIds(productIds);
+    const productsMap = new Map(products.map(p => [p.id, p]));
+
     const allPendingReviews: PendingReview[] = [];
 
-    productsSnapshot.docs.forEach(doc => {
-      const product = convertDocToProduct(doc);
-      if (product.reviews && product.reviews.length > 0) {
-        const pendingReviews = product.reviews.filter(r => r.status === 'pending');
-
-        if (pendingReviews.length > 0) {
-          pendingReviews.forEach(review => {
-            allPendingReviews.push({
-              ...review,
-              productId: product.id,
-              productSlug: product.slug,
-              productName: product.name,
-            });
-          });
-        }
+    reviewsSnapshot.docs.forEach(doc => {
+      const reviewData = doc.data();
+      const product = productsMap.get(reviewData.productId);
+      if (product) {
+        allPendingReviews.push({
+          id: doc.id,
+          ...reviewData,
+          createdAt: reviewData.createdAt.toDate(),
+          productName: product.name,
+          productSlug: product.slug,
+        } as PendingReview);
       }
     });
-
-    // Sort reviews by date, newest first
-    allPendingReviews.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     return allPendingReviews;
   } catch (error) {
@@ -564,14 +387,12 @@ export async function getAdminDashboardStats() {
             pendingReviewsPromise
         ]);
 
-        // Calculate Revenue and Sales
         let totalRevenue = 0;
         const totalSales = ordersSnapshot.size;
         ordersSnapshot.forEach(doc => {
             totalRevenue += doc.data().total;
         });
 
-        // Calculate New Users this month
         const oneMonthAgo = new Date();
         oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
         const newUsersThisMonth = userRecords.users.filter(user => {
@@ -579,7 +400,6 @@ export async function getAdminDashboardStats() {
             return creationTime >= oneMonthAgo;
         }).length;
 
-        // Get recent orders
         const recentOrdersSnapshot = await adminDb.collection('orders').orderBy('createdAt', 'desc').limit(5).get();
         const recentOrders = recentOrdersSnapshot.docs.map(doc => {
             const data = doc.data();
@@ -644,7 +464,5 @@ export async function getAnalyticsData() {
 }
 
 export async function getTestimonials(): Promise<Testimonial[]> {
-    // In a real app, this would fetch from a 'testimonials' collection in Firestore.
-    // For now, we return the static data to make the component dynamic.
     return Promise.resolve(testimonials);
 }

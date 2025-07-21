@@ -1,4 +1,5 @@
-import { getProductBySlug } from "@/lib/data";
+
+import { getProductBySlug, getReviewsByProductId } from "@/lib/data";
 import { notFound } from "next/navigation";
 import { ProductDetailsClient } from "./components/product-details-client";
 import AiRecommendations from "./components/ai-recommendations";
@@ -16,9 +17,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
     notFound();
   }
 
+  const reviews = await getReviewsByProductId(product.id);
+
   return (
     <div className="container mx-auto px-4 py-8 md:py-16">
-      <ProductDetailsClient product={product} />
+      <ProductDetailsClient product={product} reviews={reviews} />
       <div className="mt-16">
         <AiRecommendations productDescription={product.longDescription} />
       </div>

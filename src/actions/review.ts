@@ -4,25 +4,23 @@
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { revalidatePath } from 'next/cache';
-import { randomUUID } from 'crypto';
-import type { Product } from '@/types';
+import type { Review } from '@/types';
 import type { ReviewFormValues } from '@/lib/schemas/review';
 
 export async function submitReview(data: ReviewFormValues) {
     try {
-        const productRef = adminDb.collection('products').doc(data.productId);
-
-        const newReview = {
-            id: randomUUID(),
+        const newReview: Omit<Review, 'id' | 'createdAt'> = {
+            productId: data.productId,
+            userId: data.userId,
             rating: data.rating,
             text: data.text,
             author: data.author,
-            status: 'pending', // Add status for moderation
-            createdAt: FieldValue.serverTimestamp(), // Add server timestamp
+            status: 'pending',
         };
 
-        await productRef.update({
-            reviews: FieldValue.arrayUnion(newReview)
+        await adminDb.collection('reviews').add({
+            ...newReview,
+            createdAt: FieldValue.serverTimestamp(),
         });
 
     } catch (error) {
@@ -34,37 +32,20 @@ export async function submitReview(data: ReviewFormValues) {
     return { success: true, message: "Thank you for your review! It will be visible after moderation." };
 }
 
-async function updateReviewStatus(productId: string, reviewId: string, status: 'approved' | 'rejected') {
-    if (!productId || !reviewId || !status) {
+async function updateReviewStatus(reviewId: string, status: 'approved' | 'rejected') {
+    if (!reviewId || !status) {
         return { success: false, error: 'Missing required information.' };
     }
 
     try {
-        const productRef = adminDb.collection('products').doc(productId);
-        const productDoc = await productRef.get();
-
-        if (!productDoc.exists) {
-            return { success: false, error: 'Product not found.' };
-        }
-
-        const productData = productDoc.data() as Product;
-        const reviewIndex = productData.reviews.findIndex(r => r.id === reviewId);
-
-        if (reviewIndex === -1) {
-            return { success: false, error: 'Review not found.' };
-        }
-
-        // Create a new reviews array with the updated status
-        const updatedReviews = [...productData.reviews];
-        updatedReviews[reviewIndex] = {
-            ...updatedReviews[reviewIndex],
-            status: status
-        };
-
-        await productRef.update({ reviews: updatedReviews });
+        const reviewRef = adminDb.collection('reviews').doc(reviewId);
+        
+        await reviewRef.update({ status });
         
         revalidatePath(`/dashboard/mod/reviews`);
-        revalidatePath(`/product/${productData.slug}`);
+        // We need to revalidate the product page, but we don't have the slug here.
+        // A broader revalidation is acceptable in this admin action.
+        revalidatePath('/product', 'layout');
 
         return { success: true };
     } catch (error) {
@@ -73,10 +54,10 @@ async function updateReviewStatus(productId: string, reviewId: string, status: '
     }
 }
 
-export async function approveReview(productId: string, reviewId: string) {
-    return updateReviewStatus(productId, reviewId, 'approved');
+export async function approveReview(reviewId: string) {
+    return updateReviewStatus(reviewId, 'approved');
 }
 
-export async function rejectReview(productId: string, reviewId: string) {
-    return updateReviewStatus(productId, reviewId, 'rejected');
+export async function rejectReview(reviewId: string) {
+    return updateReviewStatus(reviewId, 'rejected');
 }

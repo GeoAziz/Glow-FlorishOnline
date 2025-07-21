@@ -10,11 +10,10 @@ import { FieldValue } from 'firebase-admin/firestore';
 
 export async function createProduct(data: ProductFormValues) {
     try {
-        // Since productFormSchema includes fields not in the Product type (like the string version of images),
-        // we create a new object that conforms to Omit<Product, 'id' | 'reviews'>
-        const newProduct: Omit<Product, 'id' | 'reviews' | 'createdAt'> = {
+        const newProductData = {
             name: data.name,
             slug: data.slug,
+            brand: data.brand,
             description: data.description,
             longDescription: data.longDescription,
             price: data.price,
@@ -23,11 +22,12 @@ export async function createProduct(data: ProductFormValues) {
             images: data.images,
             ingredients: data.ingredients,
             tags: data.tags,
-            reviews: [], // New products have no reviews
+            skinType: data.skinType,
+            rating: data.rating,
         };
 
         await adminDb.collection('products').add({
-            ...newProduct,
+            ...newProductData,
             createdAt: FieldValue.serverTimestamp(),
         });
 
@@ -49,8 +49,9 @@ export async function updateProduct(productId: string, data: ProductFormValues) 
     
     try {
         const productRef = adminDb.collection('products').doc(productId);
-        // The `data` object from productFormSchema already has the correct shape for updating Firestore
-        await productRef.update(data);
+        // The data object from productFormSchema already has the correct shape for updating Firestore
+        // We can cast it to any because the transformed data matches what we need to update.
+        await productRef.update(data as any);
 
     } catch (error) {
         console.error('Error updating product:', error);

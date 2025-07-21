@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { Star, Minus, Plus, Heart } from "lucide-react";
-import type { Product } from "@/types";
+import type { Product, Review } from "@/types";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/use-cart";
 import { Separator } from "@/components/ui/separator";
@@ -26,9 +26,10 @@ import {
 
 interface ProductDetailsClientProps {
   product: Product;
+  reviews: Review[];
 }
 
-export function ProductDetailsClient({ product }: ProductDetailsClientProps) {
+export function ProductDetailsClient({ product, reviews }: ProductDetailsClientProps) {
   const [quantity, setQuantity] = useState(1);
   const { addToCart } = useCart();
   
@@ -83,11 +84,9 @@ export function ProductDetailsClient({ product }: ProductDetailsClientProps) {
     }
   };
   
-  const approvedReviews = product.reviews.filter(review => review.status === 'approved');
-
-  const averageRating = approvedReviews.length > 0 
-    ? approvedReviews.reduce((acc, review) => acc + review.rating, 0) / approvedReviews.length
-    : 0;
+  const averageRating = reviews.length > 0 
+    ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length
+    : product.rating || 0;
   
   const isWishlisted = isInWishlist(product.id);
 
@@ -147,7 +146,7 @@ export function ProductDetailsClient({ product }: ProductDetailsClientProps) {
             <div className="flex items-center gap-1">
                 <Star className="w-5 h-5 text-primary fill-primary" />
                 <span className="font-bold">{averageRating.toFixed(1)}</span>
-                <span className="text-sm text-muted-foreground">({approvedReviews.length} reviews)</span>
+                <span className="text-sm text-muted-foreground">({reviews.length} reviews)</span>
             </div>
             <Separator orientation="vertical" className="h-4" />
             <span className={`text-sm font-semibold ${product.stock > 0 ? 'text-green-600' : 'text-destructive'}`}>
@@ -192,16 +191,19 @@ export function ProductDetailsClient({ product }: ProductDetailsClientProps) {
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="reviews">
-            <AccordionTrigger>Reviews ({approvedReviews.length})</AccordionTrigger>
+            <AccordionTrigger>Reviews ({reviews.length})</AccordionTrigger>
             <AccordionContent>
               <div className="space-y-6">
-                {approvedReviews.length > 0 ? (
+                {reviews.length > 0 ? (
                   <div className="space-y-4">
-                    {approvedReviews.map((review) => (
+                    {reviews.map((review) => (
                       <div key={review.id} className="border-b pb-4 last:border-none">
                         <div className="flex items-center mb-1">
                             {[...Array(review.rating)].map((_, i) => (
                                 <Star key={i} className="h-4 w-4 text-primary fill-primary" />
+                            ))}
+                             {[...Array(5 - review.rating)].map((_, i) => (
+                                <Star key={i} className="h-4 w-4 text-muted-foreground/30" />
                             ))}
                         </div>
                         <p className="text-muted-foreground italic">"{review.text}"</p>

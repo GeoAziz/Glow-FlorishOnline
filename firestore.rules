@@ -1,47 +1,84 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // --- Publicly readable collections ---
-    match /products/{productId} {
-      allow read: if true;
-      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
-    match /blog_posts/{slug} {
-      allow read: if true;
-      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
-    match /categories/{category} {
-      allow read: if true;
-      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+  
+    function isAuthenticated() {
+      return request.auth != null;
     }
 
-    // --- User-specific collections ---
+    function isUser(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    function isModerator() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'moderator';
+    }
+
     match /users/{userId} {
-      allow read, write: if request.auth != null && (request.auth.uid == userId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+      allow read, update: if isUser(userId) || isAdmin();
+      allow create, delete, list: if isAdmin();
     }
+    
+    match /products/{productId} {
+      allow read;
+      allow create, update, delete: if isAdmin();
+    }
+    
+    match /categories/{categoryId} {
+      allow read;
+      allow write: if isAdmin();
+    }
+    
     match /carts/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isUser(userId);
     }
+    
     match /wishlists/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isUser(userId);
     }
-
-    // --- Orders ---
+    
     match /orders/{orderId} {
-      allow read: if request.auth != null && (get(/databases/$(database)/documents/orders/$(orderId)).data.userId == request.auth.uid || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow update: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow read: if isUser(resource.data.userId) || isAdmin() || isModerator();
+      allow create: if isAuthenticated();
+      allow update: if isAdmin() || isModerator();
     }
+    
+    match /reviews/{reviewId} {
+      // Any authenticated user can create a review.
+      allow create: if isAuthenticated();
+      
+      // All users can read approved reviews.
+      allow read: if resource.data.status == 'approved';
+      
+      // The user who wrote the review can see it even if it's pending.
+      allow read: if resource.data.status == 'pending' && isUser(resource.data.userId);
 
-    // --- Anonymous write collections ---
-    match /contact_messages/{messageId} {
-        allow create: if true;
-        allow read, update, delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      // Moderators and Admins can read all reviews and update status.
+      allow read, update: if isAdmin() || isModerator();
+      
+      // Only Admins can delete reviews.
+      allow delete: if isAdmin();
     }
+    
     match /newsletter_subscriptions/{email} {
-        allow create: if true;
-        allow read, update, delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow write; // Anyone can subscribe
+      allow read: if isAdmin();
+    }
+    
+    match /contact_messages/{messageId} {
+      allow create; // Anyone can send a message
+      allow read, update, delete: if isAdmin() || isModerator();
+    }
+    
+    match /blog_posts/{postId} {
+      allow read;
+      allow write: if isAdmin();
     }
   }
 }

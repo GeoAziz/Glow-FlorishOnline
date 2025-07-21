@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -18,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import type { Product } from "@/types";
 
-const categories = ["Skin", "Hair", "Wellness", "Makeup"] as const;
+const categories = ["Face Care", "Hair Care", "Body Care", "Fragrance & Wellness"] as const;
 
 interface ProductEditFormProps {
     product: Product;
@@ -39,7 +40,9 @@ export function ProductEditForm({ product }: ProductEditFormProps) {
             stock: product.stock || 0,
             images: product.images.join(', '),
             ingredients: product.ingredients.join(', '),
-            tags: product.tags?.join(', ') || ''
+            tags: product.tags?.join(', ') || '',
+            skinType: product.skinType?.join(', ') || '',
+            rating: product.rating || 0
         },
     });
     
@@ -141,7 +144,20 @@ export function ProductEditForm({ product }: ProductEditFormProps) {
                                     <FormItem>
                                         <FormLabel>Product Name</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="e.g., Radiant Glow Serum" {...field} />
+                                            <Input placeholder="e.g., Snail Repair Cream" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="brand"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Brand</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="e.g., Glow & Flourish" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -154,7 +170,7 @@ export function ProductEditForm({ product }: ProductEditFormProps) {
                                     <FormItem>
                                         <FormLabel>Slug</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="e.g., radiant-glow-serum" {...field} />
+                                            <Input placeholder="e.g., snail-repair-cream" {...field} />
                                         </FormControl>
                                         <FormDescription>A unique, URL-friendly identifier.</FormDescription>
                                         <FormMessage />
@@ -256,6 +272,20 @@ export function ProductEditForm({ product }: ProductEditFormProps) {
                                     </FormItem>
                                 )}
                             />
+                            <FormField
+                                control={form.control}
+                                name="skinType"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Skin Type (Optional)</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Oily, Dry, Combination" {...field} />
+                                        </FormControl>
+                                        <FormDescription>Comma-separated list of suitable skin types.</FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         </CardContent>
                     </Card>
                     <Card>
@@ -266,9 +296,9 @@ export function ProductEditForm({ product }: ProductEditFormProps) {
                                 name="price"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Price ($)</FormLabel>
+                                        <FormLabel>Price (SEK)</FormLabel>
                                         <FormControl>
-                                            <Input type="number" step="0.01" {...field} />
+                                            <Input type="number" step="1" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -283,6 +313,20 @@ export function ProductEditForm({ product }: ProductEditFormProps) {
                                         <FormControl>
                                             <Input type="number" step="1" {...field} />
                                         </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="rating"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Current Rating (Optional)</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" step="0.1" min="0" max="5" {...field} />
+                                        </FormControl>
+                                        <FormDescription>A rating from 0.0 to 5.0.</FormDescription>
                                         <FormMessage />
                                     </FormItem>
                                 )}

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -17,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 
-const categories = ["Skin", "Hair", "Wellness", "Makeup"] as const;
+const categories = ["Face Care", "Hair Care", "Body Care", "Fragrance & Wellness"] as const;
 
 export function ProductForm() {
     const [isPending, startTransition] = useTransition();
@@ -31,14 +32,17 @@ export function ProductForm() {
         defaultValues: {
             name: "",
             slug: "",
+            brand: "Glow & Flourish",
             description: "",
             longDescription: "",
             price: 0,
             stock: 0,
-            category: "Skin",
+            category: "Face Care",
             images: "",
             ingredients: "",
-            tags: ""
+            tags: "",
+            skinType: "",
+            rating: 0
         },
     });
 
@@ -141,7 +145,20 @@ export function ProductForm() {
                                     <FormItem>
                                         <FormLabel>Product Name</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="e.g., Radiant Glow Serum" {...field} />
+                                            <Input placeholder="e.g., Snail Repair Cream" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="brand"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Brand</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="e.g., Glow & Flourish" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -154,7 +171,7 @@ export function ProductForm() {
                                     <FormItem>
                                         <FormLabel>Slug</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="e.g., radiant-glow-serum" {...field} />
+                                            <Input placeholder="e.g., snail-repair-cream" {...field} />
                                         </FormControl>
                                         <FormDescription>A unique, URL-friendly identifier.</FormDescription>
                                         <FormMessage />
@@ -256,6 +273,20 @@ export function ProductForm() {
                                     </FormItem>
                                 )}
                             />
+                            <FormField
+                                control={form.control}
+                                name="skinType"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Skin Type (Optional)</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Oily, Dry, Combination" {...field} />
+                                        </FormControl>
+                                        <FormDescription>Comma-separated list of suitable skin types.</FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         </CardContent>
                     </Card>
                     <Card>
@@ -266,9 +297,9 @@ export function ProductForm() {
                                 name="price"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Price ($)</FormLabel>
+                                        <FormLabel>Price (SEK)</FormLabel>
                                         <FormControl>
-                                            <Input type="number" step="0.01" {...field} />
+                                            <Input type="number" step="1" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -283,6 +314,20 @@ export function ProductForm() {
                                         <FormControl>
                                             <Input type="number" step="1" {...field} />
                                         </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                              <FormField
+                                control={form.control}
+                                name="rating"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Initial Rating (Optional)</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" step="0.1" min="0" max="5" {...field} />
+                                        </FormControl>
+                                        <FormDescription>A rating from 0.0 to 5.0.</FormDescription>
                                         <FormMessage />
                                     </FormItem>
                                 )}

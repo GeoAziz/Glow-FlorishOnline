@@ -1,8 +1,9 @@
+
 "use client";
 
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { zodResolver } from "@radix-ui/resolvers/zod";
 import { Star, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -32,9 +33,17 @@ export function ProductReviewForm({ productId, productSlug }: ProductReviewFormP
             slug: productSlug,
             rating: 0,
             text: "",
-            author: user?.displayName || "Anonymous",
+            author: "",
+            userId: "",
         },
     });
+
+    React.useEffect(() => {
+        if (user) {
+            form.setValue("author", user.displayName || "Anonymous");
+            form.setValue("userId", user.uid);
+        }
+    }, [user, form]);
 
     const currentRating = form.watch("rating");
 
@@ -45,7 +54,7 @@ export function ProductReviewForm({ productId, productSlug }: ProductReviewFormP
         }
 
         startTransition(async () => {
-            const result = await submitReview({ ...data, author: user.displayName || "Anonymous" });
+            const result = await submitReview({ ...data });
             if (result.success) {
                 toast({ title: "Success!", description: result.message });
                 form.reset({

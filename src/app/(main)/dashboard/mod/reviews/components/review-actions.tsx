@@ -8,17 +8,16 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Check, X } from "lucide-react";
 
 interface ReviewActionsProps {
-    productId: string;
     reviewId: string;
 }
 
-export function ReviewActions({ productId, reviewId }: ReviewActionsProps) {
+export function ReviewActions({ reviewId }: ReviewActionsProps) {
     const [isPending, startTransition] = useTransition();
     const { toast } = useToast();
 
     const handleApprove = () => {
         startTransition(async () => {
-            const result = await approveReview(productId, reviewId);
+            const result = await approveReview(reviewId);
             if (result.success) {
                 toast({ title: "Review Approved" });
             } else {
@@ -29,7 +28,7 @@ export function ReviewActions({ productId, reviewId }: ReviewActionsProps) {
 
     const handleReject = () => {
         startTransition(async () => {
-            const result = await rejectReview(productId, reviewId);
+            const result = await rejectReview(reviewId);
             if (result.success) {
                 toast({ title: "Review Rejected" });
             } else {

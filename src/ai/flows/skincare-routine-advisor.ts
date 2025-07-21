@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A Genkit flow for generating personalized skincare routines.
@@ -44,7 +45,7 @@ const findProductsTool = ai.defineTool(
     name: 'findProducts',
     description: 'Finds products from the store catalog based on category and/or keywords. Use this to find suitable cleansers, serums, moisturizers, etc.',
     inputSchema: z.object({
-      category: z.enum(['Skin', 'Hair', 'Wellness', 'Makeup']).optional().describe('The product category to search within.'),
+      category: z.enum(['Face Care', 'Hair Care', 'Body Care', 'Fragrance & Wellness']).optional().describe('The product category to search within.'),
       searchQuery: z.string().optional().describe('Keywords to search for in product names and descriptions (e.g., "hydrating", "acne", "retinol").'),
     }),
     outputSchema: z.array(z.object({
@@ -85,7 +86,7 @@ Follow these steps:
 1.  Analyze the user's skin type: {{{skinType}}} and concerns: {{{skinConcerns}}}.
 2.  For the morning routine, find a suitable Cleanser, a Serum (optional, if relevant), a Moisturizer, and an SPF (if available, otherwise skip).
 3.  For the evening routine, find a suitable Cleanser, a treatment Serum, and a Moisturizer.
-4.  Use the 'findProducts' tool for each product type you need. For example, to find a cleanser, you might call findProducts({ category: 'Skin', searchQuery: 'cleanser gentle' }).
+4.  Use the 'findProducts' tool for each product type you need. For example, to find a cleanser for oily skin, you might call findProducts({ category: 'Face Care', searchQuery: 'cleanser oily' }).
 5.  From the tool's results, select the MOST appropriate product for the user's profile.
 6.  Construct the final JSON output with the morning routine, evening routine, and general tips. Ensure the product slug is included.`,
 });

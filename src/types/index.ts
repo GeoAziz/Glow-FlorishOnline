@@ -16,6 +16,8 @@ export type User = AppUser;
 
 export type Review = {
   id: string;
+  userId: string;
+  productId: string;
   rating: number;
   text: string;
   author: string;
@@ -24,7 +26,6 @@ export type Review = {
 };
 
 export type PendingReview = Review & {
-  productId: string;
   productSlug: string;
   productName: string;
 };
@@ -33,14 +34,16 @@ export type Product = {
   id: string;
   slug: string;
   name: string;
+  brand: string;
   description: string;
   longDescription: string;
   ingredients: string[];
   price: number;
   images: string[];
-  category: "Skin" | "Hair" | "Wellness" | "Makeup";
+  category: "Face Care" | "Hair Care" | "Body Care" | "Fragrance & Wellness";
   tags?: string[];
-  reviews: Review[];
+  skinType?: string[];
+  rating?: number; // Average rating, can be updated periodically
   stock: number;
   createdAt: Date;
 };
