@@ -21,11 +21,6 @@ async function seedDatabase() {
       const productWithTimestamps = {
         ...productData,
         createdAt: new Date(),
-        reviews: productData.reviews.map(review => ({
-          ...review,
-          id: randomUUID(), // Assign a random ID to each review
-          createdAt: new Date() // Add current date for seeded reviews
-        }))
       };
       
       productsBatch.set(docRef, productWithTimestamps);
