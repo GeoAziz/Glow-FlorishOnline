@@ -1,61 +1,55 @@
 
+// To run this script, use: tsx ./scripts/seed-db.ts
+
 import { adminDb } from '../src/lib/firebase/admin';
-import { initialProducts, initialBlogPosts, blogPostContent } from '../src/lib/data';
+import { initialProducts, initialBlogPosts, blogPostContent, initialOrders } from '../src/lib/data';
 import { FieldValue } from 'firebase-admin/firestore';
+import { randomUUID } from 'crypto';
 
 async function seedDatabase() {
-  console.log('Seeding database with new product line...');
+  console.log('Seeding database...');
   
   try {
-    // Clear existing products and categories for a clean slate
-    console.log('Clearing existing products...');
-    const productsSnapshot = await adminDb.collection('products').get();
-    const deleteProductsBatch = adminDb.batch();
-    productsSnapshot.docs.forEach(doc => deleteProductsBatch.delete(doc.ref));
-    await deleteProductsBatch.commit();
-    console.log('Existing products cleared.');
-
-    console.log('Clearing existing categories...');
-    const categoriesSnapshot = await adminDb.collection('categories').get();
-    const deleteCategoriesBatch = adminDb.batch();
-    categoriesSnapshot.docs.forEach(doc => deleteCategoriesBatch.delete(doc.ref));
-    await deleteCategoriesBatch.commit();
-    console.log('Existing categories cleared.');
-    
     // Seed Products
     const productsCollection = adminDb.collection('products');
     const productsBatch = adminDb.batch();
 
-    console.log(`Adding ${initialProducts.length} new products...`);
+    console.log(`Adding ${initialProducts.length} products...`);
     initialProducts.forEach(productData => {
-      const docRef = productsCollection.doc(); // Let Firestore generate ID
+      const docRef = productsCollection.doc(productData.id);
       
       const productWithTimestamps = {
         ...productData,
-        createdAt: FieldValue.serverTimestamp(),
+        createdAt: new Date(),
+        reviews: productData.reviews.map(review => ({
+          ...review,
+          id: randomUUID(), // Assign a random ID to each review
+          createdAt: new Date() // Add current date for seeded reviews
+        }))
       };
       
       productsBatch.set(docRef, productWithTimestamps);
     });
 
     await productsBatch.commit();
-    console.log('✅ New products seeded successfully.');
+    console.log('✅ Products seeded successfully.');
 
-    // Seed Categories from new product data
+    // Seed Categories
     const categoriesCollection = adminDb.collection('categories');
     const categories = [...new Set(initialProducts.map(p => p.category))];
     const categoriesBatch = adminDb.batch();
 
-    console.log(`Adding ${categories.length} new categories...`);
+    console.log(`Adding ${categories.length} categories...`);
     categories.forEach(categoryName => {
-        const docRef = categoriesCollection.doc(categoryName.replace(/\s+/g, '-').toLowerCase());
+        // Use the category name as the document ID for simplicity and uniqueness
+        const docRef = categoriesCollection.doc(categoryName);
         categoriesBatch.set(docRef, { name: categoryName });
     });
 
     await categoriesBatch.commit();
-    console.log('✅ New categories seeded successfully.');
+    console.log('✅ Categories seeded successfully.');
     
-    // Seed Blog Posts (assuming these are still relevant)
+    // Seed Blog Posts
     const blogCollection = adminDb.collection('blog_posts');
     const blogBatch = adminDb.batch();
     
@@ -65,13 +59,33 @@ async function seedDatabase() {
         const fullPost = {
             ...post,
             content: blogPostContent[post.slug] || '',
-            publishedDate: FieldValue.serverTimestamp()
+            publishedDate: new Date() // Use current date for seeding
         };
         blogBatch.set(docRef, fullPost);
     });
 
     await blogBatch.commit();
     console.log('✅ Blog posts seeded successfully.');
+
+    // Seed Orders
+    const ordersCollection = adminDb.collection('orders');
+    const ordersBatch = adminDb.batch();
+
+    console.log(`Adding ${initialOrders.length} sample orders...`);
+    initialOrders.forEach(orderData => {
+      // For orders, we'll let Firestore generate the ID
+      const docRef = ordersCollection.doc(); 
+      
+      const orderWithTimestamp = {
+        ...orderData,
+        createdAt: FieldValue.serverTimestamp(),
+      };
+      
+      ordersBatch.set(docRef, orderWithTimestamp);
+    });
+
+    await ordersBatch.commit();
+    console.log('✅ Orders seeded successfully.');
 
 
     console.log('Database seeding complete!');

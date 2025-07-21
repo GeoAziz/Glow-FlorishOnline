@@ -58,7 +58,7 @@ const fragranceAndWellnessProducts = [
   { brand: "Glow & Flourish", name: "Detox Bath Salt Pouch", price: 149 },
 ];
 
-const generateProductData = (product: { brand: string; name: string; price: number }, category: Product['category']): Omit<Product, 'id' | 'createdAt'> => {
+const generateProductData = (product: { brand: string; name: string; price: number }, category: Product['category']): Omit<Product, 'id' | 'createdAt'> & { reviews: Omit<Review, 'id'|'productId'|'userId'|'createdAt'>[] } => {
   const slug = product.name.toLowerCase().replace(/\s+/g, '-');
   return {
     ...product,
@@ -71,6 +71,20 @@ const generateProductData = (product: { brand: string; name: string; price: numb
     stock: Math.floor(Math.random() * 100) + 10,
     rating: Math.round((Math.random() * 1.5 + 3.5) * 10) / 10, // Random rating between 3.5 and 5.0
     tags: [category.split(' ')[0], "New"],
+    reviews: [
+      {
+        author: "Ava G.",
+        rating: 5,
+        status: "approved",
+        text: "This product is amazing! It completely changed my skin for the better."
+      },
+      {
+        author: "Leo M.",
+        rating: 4,
+        status: "approved",
+        text: "Really good, but a bit pricey for the size. Still, I would buy it again."
+      }
+    ]
   };
 };
 
