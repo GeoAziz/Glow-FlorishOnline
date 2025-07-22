@@ -1,8 +1,14 @@
+<<<<<<< HEAD
 
 'use server';
 
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
+=======
+'use server';
+
+import { adminDb } from '@/lib/firebase/admin';
+>>>>>>> 0e15c13 (fixes)
 import { revalidatePath } from 'next/cache';
 import type { Review } from '@/types';
 import type { ReviewFormValues } from '@/lib/schemas/review';
@@ -20,7 +26,11 @@ export async function submitReview(data: ReviewFormValues) {
 
         await adminDb.collection('reviews').add({
             ...newReview,
+<<<<<<< HEAD
             createdAt: FieldValue.serverTimestamp(),
+=======
+            createdAt: new Date().toISOString(),
+>>>>>>> 0e15c13 (fixes)
         });
 
     } catch (error) {

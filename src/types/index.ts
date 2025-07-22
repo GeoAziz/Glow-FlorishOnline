@@ -46,7 +46,11 @@ export type Product = {
   skinType?: string[];
   rating?: number; // Average rating, can be updated periodically
   stock: number;
+<<<<<<< HEAD
   createdAt: Date;
+=======
+  createdAt: string; // Changed to string for serialization
+>>>>>>> 0e15c13 (fixes)
 };
 
 export type BlogPost = {
@@ -56,7 +60,11 @@ export type BlogPost = {
   excerpt: string;
   content: string;
   author: string;
+<<<<<<< HEAD
   publishedDate: Date;
+=======
+  publishedDate: string; // Changed to string for serialization
+>>>>>>> 0e15c13 (fixes)
   imageUrl: string;
   imageHint?: string;
   tags?: string[];
@@ -99,7 +107,11 @@ export type Order = {
     paymentDetails?: {
       paypalOrderId?: string;
     };
+<<<<<<< HEAD
     createdAt: Date;
+=======
+    createdAt: string; // Changed to string for serialization
+>>>>>>> 0e15c13 (fixes)
 };
 
 export type AdminOrder = Order & {

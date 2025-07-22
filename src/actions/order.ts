@@ -1,12 +1,29 @@
+<<<<<<< HEAD
 
 'use server';
 
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
+=======
+'use server';
+
+import { adminDb } from '@/lib/firebase/admin';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
+>>>>>>> 0e15c13 (fixes)
 import { revalidatePath } from 'next/cache';
 import type { Order, OrderItem, ShippingAddress, PaymentMethod, AdminOrder } from '@/types';
 import { getAuth } from 'firebase-admin/auth';
 
+<<<<<<< HEAD
+=======
+function toISOString(date: any): string {
+  if (!date) return new Date().toISOString();
+  if (date instanceof Date) return date.toISOString();
+  if (typeof date.toDate === 'function') return date.toDate().toISOString();
+  return new Date(date).toISOString();
+}
+
+>>>>>>> 0e15c13 (fixes)
 interface CreateOrderArgs {
   userId: string;
   items: OrderItem[];
@@ -64,9 +81,17 @@ export async function createOrder({ userId, items, total, shippingAddress, payme
         paymentMethod,
         paymentStatus: paymentMethod === 'paypal' ? 'paid' : 'unpaid',
         paymentDetails: paymentDetails || {},
+<<<<<<< HEAD
         createdAt: FieldValue.serverTimestamp() as any,
       };
       transaction.set(orderRef, newOrder);
+=======
+      };
+      transaction.set(orderRef, {
+        ...newOrder,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+>>>>>>> 0e15c13 (fixes)
       
       return orderRef.id;
     });
@@ -94,8 +119,12 @@ export async function getOrder(orderId: string): Promise<Order | null> {
         const orderDoc = await adminDb.collection('orders').doc(orderId).get();
         if (orderDoc.exists) {
             const data = orderDoc.data();
+<<<<<<< HEAD
             // Convert Firestore Timestamp to JS Date
             const createdAt = data?.createdAt.toDate();
+=======
+            const createdAt = data?.createdAt ? toISOString(data.createdAt) : new Date().toISOString();
+>>>>>>> 0e15c13 (fixes)
             return { id: orderDoc.id, ...data, createdAt } as Order;
         }
         return null;
@@ -125,7 +154,11 @@ export async function getOrdersByUserId(userId: string): Promise<Order[]> {
       return {
         id: doc.id,
         ...data,
+<<<<<<< HEAD
         createdAt: data.createdAt.toDate(), // Convert Firestore Timestamp to JS Date
+=======
+        createdAt: data.createdAt ? toISOString(data.createdAt) : new Date().toISOString(),
+>>>>>>> 0e15c13 (fixes)
       } as Order;
     });
   } catch (error) {
@@ -162,7 +195,11 @@ export async function getOrders(): Promise<AdminOrder[]> {
             return {
                 id: doc.id,
                 ...data,
+<<<<<<< HEAD
                 createdAt: data.createdAt.toDate(),
+=======
+                createdAt: data.createdAt ? toISOString(data.createdAt) : new Date().toISOString(),
+>>>>>>> 0e15c13 (fixes)
                 customer,
             } as AdminOrder;
         });

@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 
+=======
+>>>>>>> 0e15c13 (fixes)
 // To run this script, use: tsx ./scripts/seed-db.ts
 
 import { adminDb } from '../src/lib/firebase/admin';
@@ -17,6 +20,7 @@ async function seedDatabase() {
     console.log(`Adding ${initialProducts.length} products...`);
     initialProducts.forEach(productData => {
       const docRef = productsCollection.doc(productData.id);
+<<<<<<< HEAD
       
       const productWithTimestamps = {
         ...productData,
@@ -28,6 +32,19 @@ async function seedDatabase() {
         }))
       };
       
+=======
+      const productWithTimestamps = {
+        ...productData,
+        createdAt: new Date().toISOString(),
+        reviews: Array.isArray((productData as any).reviews)
+          ? (productData as any).reviews.map((review: any) => ({
+              ...review,
+              id: randomUUID(),
+              createdAt: new Date().toISOString()
+            }))
+          : [],
+      };
+>>>>>>> 0e15c13 (fixes)
       productsBatch.set(docRef, productWithTimestamps);
     });
 
@@ -59,7 +76,11 @@ async function seedDatabase() {
         const fullPost = {
             ...post,
             content: blogPostContent[post.slug] || '',
+<<<<<<< HEAD
             publishedDate: new Date() // Use current date for seeding
+=======
+            publishedDate: new Date().toISOString() // Use current date for seeding
+>>>>>>> 0e15c13 (fixes)
         };
         blogBatch.set(docRef, fullPost);
     });
@@ -73,6 +94,7 @@ async function seedDatabase() {
 
     console.log(`Adding ${initialOrders.length} sample orders...`);
     initialOrders.forEach(orderData => {
+<<<<<<< HEAD
       // For orders, we'll let Firestore generate the ID
       const docRef = ordersCollection.doc(); 
       
@@ -81,6 +103,13 @@ async function seedDatabase() {
         createdAt: FieldValue.serverTimestamp(),
       };
       
+=======
+      const docRef = ordersCollection.doc(); 
+      const orderWithTimestamp = {
+        ...orderData,
+        createdAt: new Date().toISOString(),
+      };
+>>>>>>> 0e15c13 (fixes)
       ordersBatch.set(docRef, orderWithTimestamp);
     });
 
