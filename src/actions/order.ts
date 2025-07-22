@@ -1,29 +1,20 @@
-<<<<<<< HEAD
-
-'use server';
-
-import { adminDb } from '@/lib/firebase/admin';
-import { FieldValue } from 'firebase-admin/firestore';
-=======
 'use server';
 
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
->>>>>>> 0e15c13 (fixes)
 import { revalidatePath } from 'next/cache';
 import type { Order, OrderItem, ShippingAddress, PaymentMethod, AdminOrder } from '@/types';
 import { getAuth } from 'firebase-admin/auth';
 
-<<<<<<< HEAD
-=======
 function toISOString(date: any): string {
   if (!date) return new Date().toISOString();
   if (date instanceof Date) return date.toISOString();
   if (typeof date.toDate === 'function') return date.toDate().toISOString();
+  if (date._seconds) return new Date(date._seconds * 1000).toISOString();
+  if (typeof date === 'string') return date;
   return new Date(date).toISOString();
 }
 
->>>>>>> 0e15c13 (fixes)
 interface CreateOrderArgs {
   userId: string;
   items: OrderItem[];
@@ -34,14 +25,16 @@ interface CreateOrderArgs {
     paypalOrderId?: string;
   };
 }
-
-export async function createOrder({ userId, items, total, shippingAddress, paymentMethod, paymentDetails }: CreateOrderArgs) {
-  if (!userId || !items || items.length === 0 || !shippingAddress || !paymentMethod) {
-    return { error: 'Missing required order information.' };
-  }
-
+export async function createOrder({
+  userId,
+  items,
+  total,
+  shippingAddress,
+  paymentMethod,
+  paymentDetails
+}: CreateOrderArgs): Promise<{ orderId?: string; error?: string }> {
   try {
-    const orderId = await adminDb.runTransaction(async (transaction) => {
+    const result = await adminDb.runTransaction(async transaction => {
       const productRefs = items.map(item => adminDb.collection('products').doc(item.productId));
       const productDocs = await transaction.getAll(...productRefs);
 
@@ -81,31 +74,16 @@ export async function createOrder({ userId, items, total, shippingAddress, payme
         paymentMethod,
         paymentStatus: paymentMethod === 'paypal' ? 'paid' : 'unpaid',
         paymentDetails: paymentDetails || {},
-<<<<<<< HEAD
-        createdAt: FieldValue.serverTimestamp() as any,
-      };
-      transaction.set(orderRef, newOrder);
-=======
       };
       transaction.set(orderRef, {
         ...newOrder,
         createdAt: FieldValue.serverTimestamp(),
       });
->>>>>>> 0e15c13 (fixes)
-      
+
       return orderRef.id;
     });
-
-    revalidatePath('/checkout');
-    // Also revalidate pages that show stock info
-    revalidatePath('/shop');
-    revalidatePath('/product', 'layout');
-
-
-    return { success: true, orderId };
-
+    return { orderId: result };
   } catch (error: any) {
-    console.error('Error creating order:', error);
     // Return the specific error message from the transaction to the client
     return { error: error.message || 'Failed to create order due to an unexpected error.' };
   }
@@ -119,13 +97,20 @@ export async function getOrder(orderId: string): Promise<Order | null> {
         const orderDoc = await adminDb.collection('orders').doc(orderId).get();
         if (orderDoc.exists) {
             const data = orderDoc.data();
-<<<<<<< HEAD
-            // Convert Firestore Timestamp to JS Date
-            const createdAt = data?.createdAt.toDate();
-=======
-            const createdAt = data?.createdAt ? toISOString(data.createdAt) : new Date().toISOString();
->>>>>>> 0e15c13 (fixes)
-            return { id: orderDoc.id, ...data, createdAt } as Order;
+            if (!data) return null;
+            const createdAt = data.createdAt ? toISOString(data.createdAt) : new Date().toISOString();
+            return {
+                id: orderDoc.id,
+                userId: data.userId,
+                items: data.items,
+                total: data.total,
+                shippingAddress: data.shippingAddress,
+                status: data.status,
+                paymentMethod: data.paymentMethod,
+                paymentStatus: data.paymentStatus,
+                paymentDetails: data.paymentDetails,
+                createdAt,
+            } as Order;
         }
         return null;
     } catch (error) {
@@ -136,35 +121,52 @@ export async function getOrder(orderId: string): Promise<Order | null> {
 
 
 export async function getOrdersByUserId(userId: string): Promise<Order[]> {
-  if (!userId) {
-    return [];
-  }
-  try {
-    const ordersSnapshot = await adminDb.collection('orders')
-      .where('userId', '==', userId)
-      .orderBy('createdAt', 'desc')
-      .get();
-      
-    if (ordersSnapshot.empty) {
-      return [];
+    if (!userId) {
+        return [];
     }
+    try {
+        const ordersSnapshot = await adminDb.collection('orders')
+            .where('userId', '==', userId)
+            .orderBy('createdAt', 'desc')
+            .get();
 
-    return ordersSnapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        ...data,
-<<<<<<< HEAD
-        createdAt: data.createdAt.toDate(), // Convert Firestore Timestamp to JS Date
-=======
-        createdAt: data.createdAt ? toISOString(data.createdAt) : new Date().toISOString(),
->>>>>>> 0e15c13 (fixes)
-      } as Order;
-    });
-  } catch (error) {
-    console.error('Error fetching orders for user:', error);
-    return [];
-  }
+        if (ordersSnapshot.empty) {
+            return [];
+        }
+
+        return ordersSnapshot.docs.map(doc => {
+            const data = doc.data();
+            if (!data) {
+                return {
+                    id: doc.id,
+                    userId: '',
+                    items: [],
+                    total: 0,
+                    shippingAddress: {} as ShippingAddress,
+                    status: 'pending',
+                    paymentMethod: 'paypal',
+                    paymentStatus: 'unpaid',
+                    paymentDetails: {},
+                    createdAt: new Date().toISOString(),
+                } as Order;
+            }
+            return {
+                id: doc.id,
+                userId: data.userId,
+                items: data.items,
+                total: data.total,
+                shippingAddress: data.shippingAddress,
+                status: data.status,
+                paymentMethod: data.paymentMethod,
+                paymentStatus: data.paymentStatus,
+                paymentDetails: data.paymentDetails,
+                createdAt: data.createdAt ? toISOString(data.createdAt) : new Date().toISOString(),
+            } as Order;
+        });
+    } catch (error) {
+        console.error('Error fetching user orders:', error);
+        return [];
+    }
 }
 
 export async function getOrders(): Promise<AdminOrder[]> {
@@ -177,32 +179,34 @@ export async function getOrders(): Promise<AdminOrder[]> {
             return [];
         }
 
-        const userIds = [...new Set(ordersSnapshot.docs.map(doc => doc.data().userId))];
-
-        const userResults = await getAuth().getUsers(userIds.map(uid => ({ uid })));
-        const usersMap = new Map(userResults.users.map(user => [user.uid, { name: user.displayName, email: user.email }]));
-
-        return ordersSnapshot.docs.map(doc => {
+        return await Promise.all(ordersSnapshot.docs.map(async doc => {
             const data = doc.data();
-            const userId = data.userId;
-            const customerInfo = usersMap.get(userId);
-
-            const customer = {
-                name: customerInfo?.name || data.shippingAddress.fullName,
-                email: customerInfo?.email || null
-            };
-
+            let customerInfo = null;
+            if (data.userId) {
+                try {
+                    const userRecord = await getAuth().getUser(data.userId);
+                    customerInfo = {
+                        name: userRecord.displayName,
+                        email: userRecord.email,
+                    };
+                } catch {
+                    customerInfo = null;
+                }
+            }
             return {
                 id: doc.id,
-                ...data,
-<<<<<<< HEAD
-                createdAt: data.createdAt.toDate(),
-=======
+                userId: data.userId,
+                items: data.items,
+                total: data.total,
+                shippingAddress: data.shippingAddress,
+                status: data.status,
+                paymentMethod: data.paymentMethod,
+                paymentStatus: data.paymentStatus,
+                paymentDetails: data.paymentDetails,
                 createdAt: data.createdAt ? toISOString(data.createdAt) : new Date().toISOString(),
->>>>>>> 0e15c13 (fixes)
-                customer,
+                customer: customerInfo,
             } as AdminOrder;
-        });
+        }));
     } catch (error) {
         console.error('Error fetching all orders:', error);
         return [];
@@ -216,10 +220,10 @@ export async function updateOrderStatus(orderId: string, status: Order['status']
     try {
         const orderRef = adminDb.collection('orders').doc(orderId);
         await orderRef.update({ status });
-        
+
         revalidatePath('/dashboard/admin/orders');
         revalidatePath(`/order-confirmation/${orderId}`);
-        
+
         return { success: true };
     } catch (error) {
         console.error('Error updating order status:', error);

@@ -1,7 +1,4 @@
-<<<<<<< HEAD
 
-=======
->>>>>>> 0e15c13 (fixes)
 'use server';
 
 import { adminDb } from '@/lib/firebase/admin';
@@ -27,19 +24,13 @@ export async function createProduct(data: ProductFormValues) {
             tags: data.tags,
             skinType: data.skinType,
             rating: data.rating,
-<<<<<<< HEAD
+
         };
 
         await adminDb.collection('products').add({
             ...newProductData,
             createdAt: FieldValue.serverTimestamp(),
         });
-=======
-            createdAt: new Date().toISOString(),
-        };
-
-        await adminDb.collection('products').add(newProductData);
->>>>>>> 0e15c13 (fixes)
 
     } catch (error) {
         console.error('Error creating product:', error);

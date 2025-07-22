@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-
-=======
->>>>>>> 0e15c13 (fixes)
 import admin from 'firebase-admin';
 import path from 'path';
 import fs from 'fs';
@@ -55,11 +51,9 @@ function initializeFirebaseAdmin() {
   }
 
   // Use local service account file in development
-<<<<<<< HEAD
-  const serviceAccountPath = path.resolve(process.cwd(), 'service-account-key.json');
-=======
+
   const serviceAccountPath = path.resolve(process.cwd(), 'serviceAccountKey.json');
->>>>>>> 0e15c13 (fixes)
+
   console.log(`[Admin SDK] Looking for service account key at: ${serviceAccountPath}`);
 
   if (!fs.existsSync(serviceAccountPath)) {

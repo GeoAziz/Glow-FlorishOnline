@@ -1,15 +1,8 @@
-<<<<<<< HEAD
-
-
-=======
->>>>>>> 0e15c13 (fixes)
 import { adminDb } from './firebase/admin';
 import type { Product, BlogPost, Review, PendingReview, Order, Testimonial } from "@/types";
 import type { Query, DocumentSnapshot } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { format } from 'date-fns';
-<<<<<<< HEAD
-=======
 // Helper to convert Firestore Timestamp or Date to ISO string
 function toISOString(ts: any): string {
   if (!ts) return new Date().toISOString();
@@ -21,7 +14,6 @@ function toISOString(ts: any): string {
 }
 // --- REVIEWS ---
 // ...actual review functions below...
->>>>>>> 0e15c13 (fixes)
 
 const faceCareProducts = [
   { brand: "Glow & Flourish", name: "Snail Repair Cream", price: 199 },
@@ -158,14 +150,8 @@ function convertDocToProduct(doc: DocumentSnapshot): Product {
     if (!data) {
         throw new Error("Document data is missing");
     }
-<<<<<<< HEAD
-    
     // Convert Firestore Timestamps to JS Dates
     const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date();
-
-=======
-    const createdAt = toISOString(data.createdAt);
->>>>>>> 0e15c13 (fixes)
     return {
         id: doc.id,
         ...data,
@@ -173,8 +159,6 @@ function convertDocToProduct(doc: DocumentSnapshot): Product {
     } as Product;
 }
 
-<<<<<<< HEAD
-=======
 function serializeReview(review: any): Review {
   return {
     ...review,
@@ -205,7 +189,6 @@ export function ensureReviewIsPlain(review: any): Review {
   };
 }
 
->>>>>>> 0e15c13 (fixes)
 export async function getProducts({
     searchQuery,
     category,
@@ -219,7 +202,6 @@ export async function getProducts({
 } = {}): Promise<Product[]> {
   try {
     let query: Query = adminDb.collection('products');
-<<<<<<< HEAD
 
     if (category) {
       query = query.where('category', '==', category);
@@ -233,16 +215,6 @@ export async function getProducts({
 
     let products = snapshot.docs.map(convertDocToProduct);
     
-=======
-    if (category) {
-      query = query.where('category', '==', category);
-    }
-    const snapshot = await query.orderBy('name').get();
-    if (snapshot.empty) {
-      return [];
-    }
-    let products = snapshot.docs.map(convertDocToProduct);
->>>>>>> 0e15c13 (fixes)
     if (searchQuery) {
         const lowercasedQuery = searchQuery.toLowerCase();
         products = products.filter(p =>
@@ -250,20 +222,14 @@ export async function getProducts({
             p.description.toLowerCase().includes(lowercasedQuery)
         );
     }
-<<<<<<< HEAD
     
-=======
->>>>>>> 0e15c13 (fixes)
     if (minPrice !== undefined) {
       products = products.filter(p => p.price >= minPrice);
     }
     if (maxPrice !== undefined) {
       products = products.filter(p => p.price <= maxPrice);
     }
-<<<<<<< HEAD
 
-=======
->>>>>>> 0e15c13 (fixes)
     return products;
   } catch (error) {
     console.error("Error fetching products:", error);
@@ -344,115 +310,22 @@ export async function getReviewsByProductId(productId: string): Promise<Review[]
             .where('status', '==', 'approved')
             .orderBy('createdAt', 'desc')
             .get();
-<<<<<<< HEAD
-
         if (snapshot.empty) {
             return [];
         }
-
-        return snapshot.docs.map(doc => {
-            const data = doc.data();
-            // Convert Firestore Timestamp to a serializable ISO string
-            const createdAt = data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString();
-            return {
-                id: doc.id,
-                ...data,
-                createdAt,
-            } as Review;
-        });
-
-=======
-        if (snapshot.empty) {
-            return [];
-        }
-        return snapshot.docs.map(doc => serializeReview({ id: doc.id, ...doc.data() }));
->>>>>>> 0e15c13 (fixes)
+        return snapshot.docs.map(doc => serializeReview(doc.data()));
     } catch (error) {
         console.error('Error fetching reviews:', error);
         return [];
     }
 }
 
-<<<<<<< HEAD
-
-export async function getBlogPosts(): Promise<BlogPost[]> {
-  try {
-    const snapshot = await adminDb.collection('blog_posts').orderBy('publishedDate', 'desc').get();
-    if (snapshot.empty) {
-      return [];
-    }
-    return snapshot.docs.map(doc => {
-      const data = doc.data();
-      const publishedDate = data.publishedDate?.toDate ? data.publishedDate.toDate() : new Date();
-      return {
-        id: doc.id,
-        ...data,
-        publishedDate,
-      } as BlogPost;
-    });
-  } catch (error) {
-    console.error("Error fetching blog posts:", error);
-    return [];
-  }
-}
-
-export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> {
-  try {
-    const doc = await adminDb.collection('blog_posts').doc(slug).get();
-
-    if (!doc.exists) {
-      return null;
-    }
-
-    const data = doc.data();
-    if (!data) return null;
-    
-    const publishedDate = data.publishedDate?.toDate ? data.publishedDate.toDate() : new Date();
-
-    return {
-      id: doc.id,
-      ...data,
-      publishedDate,
-    } as BlogPost;
-  } catch (error) {
-    console.error(`Error fetching blog post by slug ${slug}:`, error);
-    return null;
-  }
-}
-
-
-=======
->>>>>>> 0e15c13 (fixes)
 export async function getPendingReviews(): Promise<PendingReview[]> {
   try {
     const reviewsSnapshot = await adminDb.collection('reviews')
       .where('status', '==', 'pending')
       .orderBy('createdAt', 'desc')
       .get();
-<<<<<<< HEAD
-      
-    if (reviewsSnapshot.empty) {
-      return [];
-    }
-
-    const productIds = [...new Set(reviewsSnapshot.docs.map(doc => doc.data().productId))];
-    if (productIds.length === 0) return [];
-    
-    const products = await getProductsByIds(productIds);
-    const productsMap = new Map(products.map(p => [p.id, p]));
-
-    const allPendingReviews: PendingReview[] = [];
-
-    reviewsSnapshot.docs.forEach(doc => {
-      const reviewData = doc.data();
-      const product = productsMap.get(reviewData.productId);
-      if (product) {
-        const createdAt = reviewData.createdAt?.toDate ? reviewData.createdAt.toDate().toISOString() : new Date().toISOString();
-        allPendingReviews.push({
-          id: doc.id,
-          ...reviewData,
-          createdAt,
-=======
     if (reviewsSnapshot.empty) {
       return [];
     }
@@ -467,16 +340,11 @@ export async function getPendingReviews(): Promise<PendingReview[]> {
       if (product) {
         allPendingReviews.push({
           ...reviewData,
->>>>>>> 0e15c13 (fixes)
           productName: product.name,
           productSlug: product.slug,
         } as PendingReview);
       }
     });
-<<<<<<< HEAD
-
-=======
->>>>>>> 0e15c13 (fixes)
     return allPendingReviews;
   } catch (error) {
     console.error("Error fetching pending reviews:", error);
@@ -489,56 +357,32 @@ export async function getAdminDashboardStats() {
         const ordersPromise = adminDb.collection('orders').get();
         const usersPromise = getAuth().listUsers();
         const pendingReviewsPromise = getPendingReviews();
-<<<<<<< HEAD
-
-=======
->>>>>>> 0e15c13 (fixes)
         const [ordersSnapshot, userRecords, pendingReviews] = await Promise.all([
             ordersPromise, 
             usersPromise, 
             pendingReviewsPromise
         ]);
-<<<<<<< HEAD
-
-=======
->>>>>>> 0e15c13 (fixes)
         let totalRevenue = 0;
         const totalSales = ordersSnapshot.size;
         ordersSnapshot.forEach(doc => {
             totalRevenue += doc.data().total;
         });
-<<<<<<< HEAD
-
-=======
->>>>>>> 0e15c13 (fixes)
         const oneMonthAgo = new Date();
         oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
         const newUsersThisMonth = userRecords.users.filter(user => {
             const creationTime = new Date(user.metadata.creationTime);
             return creationTime >= oneMonthAgo;
         }).length;
-<<<<<<< HEAD
-
         const recentOrdersSnapshot = await adminDb.collection('orders').orderBy('createdAt', 'desc').limit(5).get();
         const recentOrders = recentOrdersSnapshot.docs.map(doc => {
             const data = doc.data();
-            const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date();
-=======
-        const recentOrdersSnapshot = await adminDb.collection('orders').orderBy('createdAt', 'desc').limit(5).get();
-        const recentOrders = recentOrdersSnapshot.docs.map(doc => {
-            const data = doc.data();
-            const createdAt = toISOString(data.createdAt);
->>>>>>> 0e15c13 (fixes)
+            const createdAt = data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString();
             return {
                 id: doc.id,
                 ...data,
                 createdAt,
             } as Order;
         });
-<<<<<<< HEAD
-
-=======
->>>>>>> 0e15c13 (fixes)
         return {
             totalRevenue,
             totalSales,
@@ -547,10 +391,6 @@ export async function getAdminDashboardStats() {
             totalUsers: userRecords.users.length,
             pendingReviewsCount: pendingReviews.length,
         };
-<<<<<<< HEAD
-
-=======
->>>>>>> 0e15c13 (fixes)
     } catch (error) {
         console.error('Error fetching admin dashboard stats:', error);
         return {
@@ -567,24 +407,6 @@ export async function getAdminDashboardStats() {
 export async function getAnalyticsData() {
     try {
         const ordersSnapshot = await adminDb.collection('orders').orderBy('createdAt', 'asc').get();
-<<<<<<< HEAD
-
-        if (ordersSnapshot.empty) {
-            return { monthlyRevenue: [] };
-        }
-
-        const monthlyRevenueMap = new Map<string, number>();
-
-        ordersSnapshot.docs.forEach(doc => {
-            const order = doc.data() as Omit<Order, 'id' | 'createdAt'> & { createdAt: { toDate: () => Date } };
-            const date = order.createdAt.toDate();
-            const monthKey = format(date, 'MMM yy'); // e.g., "Jan 24"
-            
-            const currentRevenue = monthlyRevenueMap.get(monthKey) || 0;
-            monthlyRevenueMap.set(monthKey, currentRevenue + order.total);
-        });
-
-=======
         if (ordersSnapshot.empty) {
             return { monthlyRevenue: [] };
         }
@@ -596,15 +418,10 @@ export async function getAnalyticsData() {
             const currentRevenue = monthlyRevenueMap.get(monthKey) || 0;
             monthlyRevenueMap.set(monthKey, currentRevenue + order.total);
         });
->>>>>>> 0e15c13 (fixes)
         const monthlyRevenue = Array.from(monthlyRevenueMap.entries()).map(([month, revenue]) => ({
             month,
             revenue,
         }));
-<<<<<<< HEAD
-
-=======
->>>>>>> 0e15c13 (fixes)
         return { monthlyRevenue };
     } catch (error) {
         console.error('Error fetching analytics data:', error);
@@ -612,10 +429,6 @@ export async function getAnalyticsData() {
     }
 }
 
-<<<<<<< HEAD
-export async function getTestimonials(): Promise<Testimonial[]> {
-    return Promise.resolve(testimonials);
-=======
 export async function getBlogPosts(): Promise<BlogPost[]> {
   try {
     const snapshot = await adminDb.collection('blog_posts').orderBy('publishedDate', 'desc').get();
@@ -627,8 +440,15 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
       const publishedDate = toISOString(data.publishedDate);
       return {
         id: doc.id,
-        ...data,
+        slug: data.slug,
+        title: data.title,
+        excerpt: data.excerpt,
+        content: data.content,
+        author: data.author,
         publishedDate,
+        imageUrl: data.imageUrl,
+        imageHint: data.imageHint,
+        tags: data.tags,
       } as BlogPost;
     });
   } catch (error) {
@@ -648,14 +468,20 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> 
     const publishedDate = toISOString(data.publishedDate);
     return {
       id: doc.id,
-      ...data,
+      slug: data.slug,
+      title: data.title,
+      excerpt: data.excerpt,
+      content: data.content,
+      author: data.author,
       publishedDate,
+      imageUrl: data.imageUrl,
+      imageHint: data.imageHint,
+      tags: data.tags,
     } as BlogPost;
   } catch (error) {
     console.error(`Error fetching blog post by slug ${slug}:`, error);
     return null;
   }
->>>>>>> 0e15c13 (fixes)
 }
 
 // Add a function to simulate fetching initial orders for seeding
@@ -698,10 +524,7 @@ export const initialOrders = [
     paymentStatus: 'unpaid',
   }
 ];
-<<<<<<< HEAD
-=======
 
 export function getTestimonials(): Testimonial[] {
   return testimonials;
 }
->>>>>>> 0e15c13 (fixes)

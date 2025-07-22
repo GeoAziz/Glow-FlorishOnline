@@ -1,5 +1,3 @@
-
-
 import type { User as FirebaseUser } from "firebase/auth";
 import type { UserInfo } from 'firebase-admin/auth';
 
@@ -46,11 +44,7 @@ export type Product = {
   skinType?: string[];
   rating?: number; // Average rating, can be updated periodically
   stock: number;
-<<<<<<< HEAD
-  createdAt: Date;
-=======
-  createdAt: string; // Changed to string for serialization
->>>>>>> 0e15c13 (fixes)
+  createdAt: string;
 };
 
 export type BlogPost = {
@@ -60,11 +54,7 @@ export type BlogPost = {
   excerpt: string;
   content: string;
   author: string;
-<<<<<<< HEAD
-  publishedDate: Date;
-=======
-  publishedDate: string; // Changed to string for serialization
->>>>>>> 0e15c13 (fixes)
+  publishedDate: string;
   imageUrl: string;
   imageHint?: string;
   tags?: string[];
@@ -107,11 +97,7 @@ export type Order = {
     paymentDetails?: {
       paypalOrderId?: string;
     };
-<<<<<<< HEAD
-    createdAt: Date;
-=======
-    createdAt: string; // Changed to string for serialization
->>>>>>> 0e15c13 (fixes)
+    createdAt: string;
 };
 
 export type AdminOrder = Order & {
