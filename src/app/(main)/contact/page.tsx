@@ -34,10 +34,10 @@ export default function ContactPage() {
                   Send us an email for any inquiry.
                 </p>
                 <a
-                  href="mailto:support@glowandflourish.com"
+                  href="mailto:glowandflourishbeautysolutions@gmail.com"
                   className="text-primary hover:underline"
                 >
-                  support@glowandflourish.com
+                  glowandflourishbeautysolutions@gmail.com
                 </a>
               </div>
             </div>
@@ -51,7 +51,7 @@ export default function ContactPage() {
                   Our team is available Mon-Fri, 9am-5pm EST.
                 </p>
                 <a href="tel:+1234567890" className="text-primary hover:underline">
-                  +1 (234) 567-890
+                  +456722565013
                 </a>
               </div>
             </div>
@@ -62,9 +62,8 @@ export default function ContactPage() {
               <div>
                 <h3 className="text-xl font-semibold">Our Office</h3>
                 <p className="text-muted-foreground">
-                  123 Beauty Lane,
-                  <br />
-                  Los Angeles, CA 90210
+                  Sandvikens , P.O.BOX 81141                  <br />
+                  Gävleborg County
                 </p>
               </div>
             </div>
