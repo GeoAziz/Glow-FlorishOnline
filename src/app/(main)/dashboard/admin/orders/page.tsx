@@ -1,4 +1,3 @@
-
 import { getOrders } from "@/actions/order";
 import {
   Table,
@@ -55,8 +54,12 @@ export default async function AdminOrdersPage() {
               <TableRow key={order.id}>
                 <TableCell className="font-mono text-xs">{order.id}</TableCell>
                 <TableCell>
-                  <div className="font-medium">{order.customer.name}</div>
-                  <div className="text-sm text-muted-foreground">{order.customer.email}</div>
+                  <div className="font-medium">
+                    {order.customer?.name || "Unknown"}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {order.customer?.email || "No email"}
+                  </div>
                 </TableCell>
                 <TableCell>
                   {format(new Date(order.createdAt), "MMM d, yyyy")}
