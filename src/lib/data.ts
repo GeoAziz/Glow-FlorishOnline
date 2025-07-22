@@ -145,18 +145,17 @@ const testimonials: Testimonial[] = [
     },
   ];
 
-function convertDocToProduct(doc: DocumentSnapshot): Product {
-    const data = doc.data();
-    if (!data) {
-        throw new Error("Document data is missing");
-    }
-    // Convert Firestore Timestamps to JS Dates
-    const createdAt = data.createdAt?.toDate ? data.createdAt.toDate() : new Date();
-    return {
-        id: doc.id,
-        ...data,
-        createdAt,
-    } as Product;
+function convertDocToProduct(doc: any): Product {
+  const data = doc.data();
+  return {
+    ...data,
+    id: doc.id,
+    createdAt: data.createdAt?.toDate
+      ? data.createdAt.toDate().toISOString()
+      : typeof data.createdAt === "string"
+      ? data.createdAt
+      : new Date().toISOString(),
+  };
 }
 
 function serializeReview(review: any): Review {
@@ -303,53 +302,27 @@ export async function getCategories(): Promise<string[]> {
 }
 
 export async function getReviewsByProductId(productId: string): Promise<Review[]> {
-    if (!productId) return [];
-    try {
-        const snapshot = await adminDb.collection('reviews')
-            .where('productId', '==', productId)
-            .where('status', '==', 'approved')
-            .orderBy('createdAt', 'desc')
-            .get();
-        if (snapshot.empty) {
-            return [];
-        }
-        return snapshot.docs.map(doc => serializeReview(doc.data()));
-    } catch (error) {
-        console.error('Error fetching reviews:', error);
-        return [];
-    }
+  const snapshot = await adminDb.collection('reviews')
+    .where('productId', '==', productId)
+    .where('status', '==', 'approved')
+    .orderBy('createdAt', 'desc')
+    .get();
+  return snapshot.docs.map(doc => ensureReviewIsPlain({ id: doc.id, ...doc.data() }));
 }
 
 export async function getPendingReviews(): Promise<PendingReview[]> {
-  try {
-    const reviewsSnapshot = await adminDb.collection('reviews')
-      .where('status', '==', 'pending')
-      .orderBy('createdAt', 'desc')
-      .get();
-    if (reviewsSnapshot.empty) {
-      return [];
-    }
-    const productIds = [...new Set(reviewsSnapshot.docs.map(doc => doc.data().productId))];
-    if (productIds.length === 0) return [];
-    const products = await getProductsByIds(productIds);
-    const productsMap = new Map(products.map(p => [p.id, p]));
-    const allPendingReviews: PendingReview[] = [];
-    reviewsSnapshot.docs.forEach(doc => {
-      const reviewData = serializeReview({ id: doc.id, ...doc.data() });
-      const product = productsMap.get(reviewData.productId);
-      if (product) {
-        allPendingReviews.push({
-          ...reviewData,
-          productName: product.name,
-          productSlug: product.slug,
-        } as PendingReview);
-      }
-    });
-    return allPendingReviews;
-  } catch (error) {
-    console.error("Error fetching pending reviews:", error);
-    return [];
-  }
+  const snapshot = await adminDb.collection('reviews')
+    .where('status', '==', 'pending')
+    .orderBy('createdAt', 'desc')
+    .get();
+  return snapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      ...ensureReviewIsPlain({ id: doc.id, ...data }),
+      productSlug: data.productSlug ?? '',
+      productName: data.productName ?? '',
+    } as PendingReview;
+  });
 }
 
 export async function getAdminDashboardStats() {
@@ -376,7 +349,7 @@ export async function getAdminDashboardStats() {
         const recentOrdersSnapshot = await adminDb.collection('orders').orderBy('createdAt', 'desc').limit(5).get();
         const recentOrders = recentOrdersSnapshot.docs.map(doc => {
             const data = doc.data();
-            const createdAt = data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : new Date().toISOString();
+            const createdAt = data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : (typeof data.createdAt === 'string' ? data.createdAt : new Date().toISOString());
             return {
                 id: doc.id,
                 ...data,
@@ -413,7 +386,7 @@ export async function getAnalyticsData() {
         const monthlyRevenueMap = new Map<string, number>();
         ordersSnapshot.docs.forEach(doc => {
             const order = doc.data();
-            const date = order.createdAt?.toDate ? order.createdAt.toDate() : new Date();
+            const date = order.createdAt?.toDate ? order.createdAt.toDate() : (typeof order.createdAt === 'string' ? new Date(order.createdAt) : new Date());
             const monthKey = format(date, 'MMM yy'); // e.g., "Jan 24"
             const currentRevenue = monthlyRevenueMap.get(monthKey) || 0;
             monthlyRevenueMap.set(monthKey, currentRevenue + order.total);

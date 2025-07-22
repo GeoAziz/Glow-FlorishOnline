@@ -1,10 +1,10 @@
+// To run this script, use: tsx ./src/scripts/seed-db.ts
 
-// To run this script, use: tsx ./scripts/seed-db.ts
-
-import { adminDb } from '../src/lib/firebase/admin';
-import { initialProducts, initialBlogPosts, blogPostContent, initialOrders } from '../src/lib/data';
+import { adminDb } from '../lib/firebase/admin';
+import { initialProducts, initialBlogPosts, blogPostContent, initialOrders } from '../lib/data';
 import { FieldValue } from 'firebase-admin/firestore';
 import { randomUUID } from 'crypto';
+import type { Product, BlogPost, Order } from '../types';
 
 async function seedDatabase() {
   console.log('Seeding database...');
@@ -15,14 +15,12 @@ async function seedDatabase() {
     const productsBatch = adminDb.batch();
 
     console.log(`Adding ${initialProducts.length} products...`);
-    initialProducts.forEach(productData => {
+    initialProducts.forEach((productData) => {
       const docRef = productsCollection.doc(productData.id);
-      
       const productWithTimestamps = {
         ...productData,
-        createdAt: new Date(),
+        createdAt: new Date().toISOString(), // Always ISO string
       };
-      
       productsBatch.set(docRef, productWithTimestamps);
     });
 
@@ -35,8 +33,7 @@ async function seedDatabase() {
     const categoriesBatch = adminDb.batch();
 
     console.log(`Adding ${categories.length} categories...`);
-    categories.forEach(categoryName => {
-        // Use the category name as the document ID for simplicity and uniqueness
+    categories.forEach((categoryName: string) => {
         const docRef = categoriesCollection.doc(categoryName);
         categoriesBatch.set(docRef, { name: categoryName });
     });
@@ -49,12 +46,12 @@ async function seedDatabase() {
     const blogBatch = adminDb.batch();
     
     console.log(`Adding ${initialBlogPosts.length} blog posts...`);
-    initialBlogPosts.forEach(post => {
+    initialBlogPosts.forEach((post) => {
         const docRef = blogCollection.doc(post.slug);
         const fullPost = {
             ...post,
             content: blogPostContent[post.slug] || '',
-            publishedDate: new Date() // Use current date for seeding
+            publishedDate: new Date().toISOString()
         };
         blogBatch.set(docRef, fullPost);
     });
@@ -67,21 +64,17 @@ async function seedDatabase() {
     const ordersBatch = adminDb.batch();
 
     console.log(`Adding ${initialOrders.length} sample orders...`);
-    initialOrders.forEach(orderData => {
-      // For orders, we'll let Firestore generate the ID
+    initialOrders.forEach((orderData) => {
       const docRef = ordersCollection.doc(); 
-      
       const orderWithTimestamp = {
         ...orderData,
-        createdAt: FieldValue.serverTimestamp(),
+        createdAt: new Date().toISOString(), // Always ISO string
       };
-      
       ordersBatch.set(docRef, orderWithTimestamp);
     });
 
     await ordersBatch.commit();
     console.log('✅ Orders seeded successfully.');
-
 
     console.log('Database seeding complete!');
     process.exit(0);
