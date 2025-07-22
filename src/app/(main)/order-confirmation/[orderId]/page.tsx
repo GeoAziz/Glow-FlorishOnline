@@ -1,4 +1,3 @@
-
 import { getOrder } from "@/actions/order";
 import { notFound } from "next/navigation";
 import Image from "next/image";
@@ -15,7 +14,8 @@ interface OrderConfirmationPageProps {
   };
 }
 
-export default async function OrderConfirmationPage({ params }: OrderConfirmationPageProps) {
+export default async function OrderConfirmationPage(props: OrderConfirmationPageProps) {
+  const params = await props.params;
   const order = await getOrder(params.orderId);
 
   if (!order) {
