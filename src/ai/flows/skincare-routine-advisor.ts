@@ -1,5 +1,5 @@
-
 'use server';
+
 /**
  * @fileOverview A Genkit flow for generating personalized skincare routines.
  *
@@ -8,8 +8,8 @@
  * - SkincareRoutineOutput - The return type for the generateSkincareRoutine function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
 import { getProducts } from '@/lib/data';
 
 // Input Schema
@@ -49,23 +49,23 @@ const findProductsTool = ai.defineTool(
       searchQuery: z.string().optional().describe('Keywords to search for in product names and descriptions (e.g., "hydrating", "acne", "retinol").'),
     }),
     outputSchema: z.array(z.object({
-        slug: z.string(),
-        name: z.string(),
-        description: z.string(),
-        category: z.string(),
-        ingredients: z.array(z.string()),
+      slug: z.string(),
+      name: z.string(),
+      description: z.string(),
+      category: z.string(),
+      ingredients: z.array(z.string()),
     })),
   },
   async ({ category, searchQuery }) => {
-    console.log(`Tool called: findProducts with category=${category}, query=${searchQuery}`);
+    console.log(`🔍 Tool called: findProducts with category="${category}", query="${searchQuery}"`);
     const products = await getProducts({ category, searchQuery });
-    // Return a simplified version of the product for the LLM
-    return products.map(p => ({
-        slug: p.slug,
-        name: p.name,
-        description: p.description,
-        category: p.category,
-        ingredients: p.ingredients,
+    console.log("[🧪 findProductsTool] Got products:", JSON.stringify(products, null, 2));
+    return (products || []).filter(p => p && p.slug && p.name).map(p => ({
+      slug: p.slug,
+      name: p.name,
+      description: p.description || '',
+      category: p.category || 'Unknown',
+      ingredients: p.ingredients || [],
     }));
   }
 );
@@ -76,22 +76,22 @@ const prompt = ai.definePrompt({
   input: { schema: SkincareRoutineInputSchema },
   output: { schema: SkincareRoutineOutputSchema },
   tools: [findProductsTool],
-  system: `You are an expert esthetician for "Glow & Flourish", a luxury beauty brand.
+  prompt: `You are an expert esthetician for "Glow & Flourish", a luxury beauty brand.
 Your task is to create a personalized morning and evening skincare routine for a customer based on their skin type and concerns.
 You MUST use the 'findProducts' tool to search for appropriate products from the store's catalog for each step of the routine.
 For each recommended product, provide a concise reason why it's a good fit for the user.
 Also, provide 2-3 general tips tailored to the user's needs.
 
 Follow these steps:
-1.  Analyze the user's skin type: {{{skinType}}} and concerns: {{{skinConcerns}}}.
-2.  For the morning routine, find a suitable Cleanser, a Serum (optional, if relevant), a Moisturizer, and an SPF (if available, otherwise skip).
-3.  For the evening routine, find a suitable Cleanser, a treatment Serum, and a Moisturizer.
-4.  Use the 'findProducts' tool for each product type you need. For example, to find a cleanser for oily skin, you might call findProducts({ category: 'Face Care', searchQuery: 'cleanser oily' }).
-5.  From the tool's results, select the MOST appropriate product for the user's profile.
-6.  Construct the final JSON output with the morning routine, evening routine, and general tips. Ensure the product slug is included.`,
+1. Analyze the user's skin type: {{{skinType}}} and concerns: {{{skinConcerns}}}.
+2. For the morning routine, find a suitable Cleanser, a Serum (optional, if relevant), a Moisturizer, and an SPF (if available, otherwise skip).
+3. For the evening routine, find a suitable Cleanser, a treatment Serum, and a Moisturizer.
+4. Use the 'findProducts' tool for each product type you need. For example, to find a cleanser for oily skin, you might call findProducts({ category: 'Face Care', searchQuery: 'cleanser oily' }).
+5. From the tool's results, select the MOST appropriate product for the user's profile.
+6. Construct the final JSON output with the morning routine, evening routine, and general tips. Ensure the product slug is included.`,
 });
 
-// Flow Definition
+// Flow Definition with error handling and logging
 const skincareRoutineFlow = ai.defineFlow(
   {
     name: 'skincareRoutineFlow',
@@ -99,11 +99,31 @@ const skincareRoutineFlow = ai.defineFlow(
     outputSchema: SkincareRoutineOutputSchema,
   },
   async (input) => {
-    const { output } = await prompt(input);
-    if (!output) {
-        throw new Error("The AI failed to generate a routine. Please try again.");
+    console.log("📥 Prompt input:", JSON.stringify(input, null, 2));
+
+    let result: unknown;
+
+    try {
+      result = await prompt(input);
+      console.log("📤 Raw prompt result:", JSON.stringify(result, null, 2));
+    } catch (err: any) {
+      console.error("❌ Prompt execution failed!");
+      if (err instanceof Error) {
+        console.error("🧠 Message:", err.message);
+        console.error("📚 Stack trace:", err.stack);
+      } else {
+        console.error("Unknown error:", err);
+      }
+      throw new Error("The AI failed to generate a routine due to an internal error. Details: " + (err instanceof Error ? err.message : String(err)));
     }
-    return output;
+
+    // Defensive check for result structure
+    if (!result || typeof result !== 'object' || !('output' in result) || !(result as any).output) {
+      console.error("❌ Invalid AI response structure:", JSON.stringify(result, null, 2));
+      throw new Error("The AI failed to generate a routine. No valid output returned. See server logs for details.");
+    }
+
+    return (result as any).output as SkincareRoutineOutput;
   }
 );
 

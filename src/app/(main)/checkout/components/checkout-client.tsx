@@ -181,9 +181,9 @@ export function CheckoutClient() {
     <PayPalScriptProvider
       options={{
         clientId: paypalClientId,
-        currency: "SEK",
+        currency: "USD", // <-- Change to USD for sandbox testing
         components: "buttons",
-        env: "sandbox" // <-- Ensure sandbox mode for sandbox client ID
+        env: "sandbox"
       }}
     >
       <form onSubmit={form.handleSubmit(handlePayOnDelivery)} className="grid lg:grid-cols-3 gap-8 lg:gap-12">
@@ -297,7 +297,7 @@ export function CheckoutClient() {
                       purchase_units: [{
                         amount: {
                           value: (cartTotal + 50.00).toFixed(2),
-                          currency_code: 'SEK'
+                          currency_code: 'USD' // <-- Change to USD here too
                         }
                       }]
                     });
