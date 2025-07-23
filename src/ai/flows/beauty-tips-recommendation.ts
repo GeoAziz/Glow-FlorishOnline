@@ -9,61 +9,28 @@
  * - `BeautyTipsRecommendationOutput` - The output type for the `beautyTipsRecommendation` function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import axios from 'axios';
 
-const BeautyTipsRecommendationInputSchema = z.object({
-  productDescription: z
-    .string()
-    .describe('The description of the product the user is viewing.'),
-});
-export type BeautyTipsRecommendationInput = z.infer<
-  typeof BeautyTipsRecommendationInputSchema
->;
+const HF_API_KEY = process.env.HF_API_KEY;
+const HF_MODEL = 'mistralai/Mistral-7B-Instruct-v0.2';
 
-const BeautyTipsRecommendationOutputSchema = z.object({
-  tips: z
-    .array(z.string())
-    .describe('An array of personalized beauty and wellness tips.'),
-});
-export type BeautyTipsRecommendationOutput = z.infer<
-  typeof BeautyTipsRecommendationOutputSchema
->;
+export type BeautyTipsRecommendationInput = {productDescription: string};
+export type BeautyTipsRecommendationOutput = {tips: string[]};
 
 export async function beautyTipsRecommendation(
   input: BeautyTipsRecommendationInput
 ): Promise<BeautyTipsRecommendationOutput> {
-  return beautyTipsRecommendationFlow(input);
-}
-
-const prompt = ai.definePrompt({
-  name: 'beautyTipsRecommendationPrompt',
-  input: {schema: BeautyTipsRecommendationInputSchema},
-  output: {schema: BeautyTipsRecommendationOutputSchema},
-  prompt: `You are a beauty and wellness expert. Based on the following product description, provide personalized beauty and wellness tips to the customer.
-
-Product Description: {{{productDescription}}}
-
-Tips should be relevant to the product and help the customer make informed decisions and discover new products that suit their needs. Provide 3 tips. Return the tips as a JSON array.
-
-For example:
-{
-  "tips": [
-    "Tip 1: ...",
-    "Tip 2: ...",
-    "Tip 3: ..."
-  ]
-}`,
-});
-
-const beautyTipsRecommendationFlow = ai.defineFlow(
-  {
-    name: 'beautyTipsRecommendationFlow',
-    inputSchema: BeautyTipsRecommendationInputSchema,
-    outputSchema: BeautyTipsRecommendationOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
+  const prompt = `You are a beauty and wellness expert. Based on the following product description, provide personalized beauty and wellness tips to the customer.\n\nProduct Description: ${input.productDescription}\n\nTips should be relevant to the product and help the customer make informed decisions and discover new products that suit their needs. Provide 3 tips. Return the tips as a JSON array.\n\nFor example:\n{\n  \"tips\": [\n    \"Tip 1: ...\",\n    \"Tip 2: ...\",\n    \"Tip 3: ...\"\n  ]\n}`;
+  const response = await axios.post(
+    `https://api-inference.huggingface.co/models/${HF_MODEL}`,
+    {inputs: prompt},
+    {headers: {Authorization: `Bearer ${HF_API_KEY}`}}
+  );
+  const text = response.data?.['generated_text'] || response.data?.[0]?.generated_text || '';
+  try {
+    const parsed = JSON.parse(text);
+    return parsed;
+  } catch {
+    return {tips: [text]};
   }
-);
+}

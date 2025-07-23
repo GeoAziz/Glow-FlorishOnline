@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -6,9 +5,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Sparkles, Loader2 } from "lucide-react";
+import { useDropzone } from "react-dropzone";
+import dynamic from "next/dynamic";
 
 import { createProduct } from "@/actions/product";
-import { generateProductDescription } from "@/ai/flows/product-description-generator";
+import { generateProductDescription, type ProductDescriptionOutput } from "@/ai/flows/product-description-generator";
 import { productFormSchema, type ProductFormValues } from "@/lib/schemas/product";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -18,12 +19,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 
+const RichTextEditor = dynamic(() => import("@/components/ui/rich-text-editor"), { ssr: false });
+
 const categories = ["Face Care", "Hair Care", "Body Care", "Fragrance & Wellness"] as const;
 
 export function ProductForm() {
     const [isPending, startTransition] = useTransition();
     const [isGenerating, setIsGenerating] = useState(false);
     const [aiKeywords, setAiKeywords] = useState("");
+    const [aiPreview, setAiPreview] = useState<ProductDescriptionOutput | null>(null);
+    const [uploadedImages, setUploadedImages] = useState<string[]>([]);
     const { toast } = useToast();
     const router = useRouter();
 
@@ -38,10 +43,10 @@ export function ProductForm() {
             price: 0,
             stock: 0,
             category: "Face Care",
-            images: "",
-            ingredients: "",
-            tags: "",
-            skinType: "",
+            images: [],
+            ingredients: [],
+            tags: [],
+            skinType: [],
             rating: 0
         },
     });
@@ -60,16 +65,11 @@ export function ProductForm() {
         setIsGenerating(true);
         try {
             const result = await generateProductDescription({ productName, keywords: aiKeywords });
-            if (result.description && result.longDescription) {
-                form.setValue("description", result.description, { shouldValidate: true });
-                form.setValue("longDescription", result.longDescription, { shouldValidate: true });
-                toast({
-                    title: "Content Generated!",
-                    description: "The product descriptions have been filled in.",
-                });
-            } else {
-                 throw new Error("AI did not return the expected content.");
-            }
+            setAiPreview(result); // Show preview instead of filling fields
+            toast({
+                title: "Preview Ready",
+                description: "Review the AI suggestions before applying.",
+            });
         } catch (error) {
             console.error("Error generating product description:", error);
             toast({
@@ -100,6 +100,13 @@ export function ProductForm() {
         });
     };
 
+    const onDrop = (acceptedFiles: File[]) => {
+        const newImages = acceptedFiles.map(file => URL.createObjectURL(file));
+        setUploadedImages(prev => [...prev, ...newImages]);
+        form.setValue("images", [...form.getValues("images"), ...newImages], { shouldValidate: true });
+    };
+    const { getRootProps, getInputProps } = useDropzone({ onDrop, accept: { 'image/*': [] }, multiple: true });
+
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="grid md:grid-cols-3 gap-8">
@@ -107,29 +114,45 @@ export function ProductForm() {
                     <Card>
                         <CardHeader>
                             <CardTitle>AI Content Generator</CardTitle>
-                             <CardDescription>
+                            <CardDescription>
                                 Provide a product name and some keywords, then let AI write the descriptions for you.
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="space-y-2">
-                                <FormLabel>Keywords</FormLabel>
-                                <Input 
-                                    placeholder="e.g., hydrating, for sensitive skin, anti-aging" 
-                                    value={aiKeywords}
-                                    onChange={(e) => setAiKeywords(e.target.value)}
-                                    disabled={isGenerating}
-                                />
-                                <FormDescription>Comma-separated keywords that describe the product.</FormDescription>
+                            <div className="flex gap-4 items-end">
+                                <div className="flex-1 space-y-2">
+                                    <FormLabel>Product Name</FormLabel>
+                                    <Input 
+                                        placeholder="e.g., Snail Repair Cream" 
+                                        value={form.watch("name")}
+                                        onChange={e => form.setValue("name", e.target.value)}
+                                        disabled={isGenerating}
+                                    />
+                                </div>
+                                <div className="flex-1 space-y-2">
+                                    <FormLabel>Keywords</FormLabel>
+                                    <Input 
+                                        placeholder="e.g., hydrating, for sensitive skin, anti-aging" 
+                                        value={aiKeywords}
+                                        onChange={e => setAiKeywords(e.target.value)}
+                                        disabled={isGenerating}
+                                    />
+                                </div>
+                                <Button 
+                                    type="button" 
+                                    onClick={handleGenerateDescription} 
+                                    disabled={isGenerating || !form.watch("name") || !aiKeywords}
+                                    className="h-10"
+                                >
+                                    {isGenerating ? (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <Sparkles className="mr-2 h-4 w-4" />
+                                    )}
+                                    Generate Descriptions
+                                </Button>
                             </div>
-                            <Button type="button" onClick={handleGenerateDescription} disabled={isGenerating}>
-                                {isGenerating ? (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                ) : (
-                                    <Sparkles className="mr-2 h-4 w-4" />
-                                )}
-                                Generate Descriptions
-                            </Button>
+                            <FormDescription>Fill both fields and click Generate. Keywords should be comma-separated.</FormDescription>
                         </CardContent>
                     </Card>
 
@@ -334,6 +357,48 @@ export function ProductForm() {
                             />
                         </CardContent>
                     </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Images</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div {...getRootProps()} className="border-dashed border-2 p-4 rounded cursor-pointer mb-2">
+                                <input {...getInputProps()} />
+                                <p>Drag & drop images here, or click to select files</p>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {uploadedImages.map((img, idx) => (
+                                    <div key={idx} className="relative">
+                                      <img src={img} alt="Preview" className="w-24 h-24 object-cover rounded" />
+                                      <button type="button" className="absolute top-0 right-0 bg-red-500 text-white rounded-full px-2" onClick={() => {
+                                        setUploadedImages(uploadedImages.filter((_, i) => i !== idx));
+                                        form.setValue("images", uploadedImages.filter((_, i) => i !== idx), { shouldValidate: true });
+                                      }}>×</button>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Long Description</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <FormField
+                              control={form.control}
+                              name="longDescription"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Full Description</FormLabel>
+                                  <FormControl>
+                                    <RichTextEditor value={field.value} onChange={field.onChange} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                        </CardContent>
+                    </Card>
                     <div className="space-y-2">
                         <Button type="submit" size="lg" className="w-full" disabled={isPending}>
                             {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -345,6 +410,42 @@ export function ProductForm() {
                     </div>
                 </div>
             </form>
+
+            {aiPreview && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-6 relative">
+      <h2 className="text-2xl font-bold mb-2">AI Description Preview</h2>
+      {aiPreview.description === 'Model unavailable or quota exceeded.' ? (
+        <div className="text-red-600 mb-4">AI generation failed. Please check your API quota or try again later.</div>
+      ) : (
+        <>
+          <p className="mb-2"><strong>Short Description:</strong> {aiPreview.description || 'No description generated.'}</p>
+          <p className="mb-2"><strong>Long Description:</strong> {aiPreview.longDescription || 'No long description generated.'}</p>
+          <p className="mb-2"><strong>Ingredients:</strong> {aiPreview.ingredients.length > 0 ? aiPreview.ingredients.join(', ') : 'No ingredients suggested.'}</p>
+          <p className="mb-2"><strong>Tags:</strong> {aiPreview.tags.length > 0 ? aiPreview.tags.join(', ') : 'No tags suggested.'}</p>
+          <img src={aiPreview.imageUrl || 'https://placehold.co/400x300'} alt="Preview" className="rounded-md w-full h-48 object-cover mb-2" />
+        </>
+      )}
+      <div className="flex gap-4 mt-4">
+        <Button
+          onClick={() => {
+            if (aiPreview.description && aiPreview.description !== 'Model unavailable or quota exceeded.') {
+              form.setValue('description', aiPreview.description, { shouldValidate: true });
+              form.setValue('longDescription', aiPreview.longDescription, { shouldValidate: true });
+              form.setValue('ingredients', aiPreview.ingredients, { shouldValidate: true });
+              form.setValue('tags', aiPreview.tags, { shouldValidate: true });
+              form.setValue('images', [aiPreview.imageUrl], { shouldValidate: true });
+              setAiPreview(null);
+              toast({ title: 'Content Applied!', description: 'AI-generated content has been filled in.' });
+            }
+          }}
+          disabled={aiPreview.description === 'Model unavailable or quota exceeded.'}
+        >Apply</Button>
+        <Button variant="outline" onClick={() => setAiPreview(null)}>Cancel</Button>
+      </div>
+    </div>
+  </div>
+)}
         </Form>
     )
 }

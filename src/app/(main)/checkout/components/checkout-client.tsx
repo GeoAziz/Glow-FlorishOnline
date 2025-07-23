@@ -180,10 +180,9 @@ export function CheckoutClient() {
   return (
     <PayPalScriptProvider
       options={{
-        clientId: paypalClientId,
-        currency: "USD", // <-- Change to USD for sandbox testing
-        components: "buttons",
-        env: "sandbox"
+        clientId: paypalClientId || "", // fallback to empty string
+        currency: "USD",
+        components: "buttons"
       }}
     >
       <form onSubmit={form.handleSubmit(handlePayOnDelivery)} className="grid lg:grid-cols-3 gap-8 lg:gap-12">
@@ -252,7 +251,7 @@ export function CheckoutClient() {
               <div className="max-h-64 overflow-y-auto space-y-4 pr-2">
                 {cart.map(item => (
                   <div key={item.product.id} className="flex items-start gap-4">
-                    <Image src={item.product.images[0]} alt={item.product.name} width={64} height={64} className="rounded-md" />
+                    <Image src={item.product.images[0] || "https://placehold.co/64x64"} alt={item.product.name} width={64} height={64} className="rounded-md" />
                     <div className="flex-grow">
                       <p className="font-semibold">{item.product.name}</p>
                       <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>

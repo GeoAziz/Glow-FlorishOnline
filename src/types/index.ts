@@ -5,6 +5,7 @@ export type UserRole = 'admin' | 'moderator' | 'user';
 
 export interface AppUser extends FirebaseUser {
   role: UserRole;
+  id: string; // Added id property
 }
 
 export interface AdminAppUser extends UserInfo {

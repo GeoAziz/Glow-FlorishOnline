@@ -7,53 +7,52 @@
  * - ProductDescriptionOutput - The return type for the generateProductDescription function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import axios from 'axios';
 
-const ProductDescriptionInputSchema = z.object({
-  productName: z.string().describe('The name of the product.'),
-  keywords: z.string().describe('A comma-separated list of keywords describing the product (e.g., hydrating, for sensitive skin, anti-aging).'),
-});
-export type ProductDescriptionInput = z.infer<typeof ProductDescriptionInputSchema>;
+const HF_API_KEY = process.env.HF_API_KEY;
+const HF_MODEL = 'facebook/bart-large-cnn'; // switched to a free, supported model
 
-const ProductDescriptionOutputSchema = z.object({
-  description: z.string().describe('A short, catchy description for product cards (20-30 words).'),
-  longDescription: z.string().describe('A full, detailed product description for the product page (80-120 words).'),
-});
-export type ProductDescriptionOutput = z.infer<typeof ProductDescriptionOutputSchema>;
+export type ProductDescriptionInput = {
+  productName: string;
+  keywords: string;
+};
+
+export type ProductDescriptionOutput = {
+  description: string;
+  longDescription: string;
+  ingredients: string[];
+  tags: string[];
+  imageUrl: string;
+};
 
 export async function generateProductDescription(
   input: ProductDescriptionInput
 ): Promise<ProductDescriptionOutput> {
-  return productDescriptionGeneratorFlow(input);
+  const prompt = `Write a short and long product description for ${input.productName}. Keywords: ${input.keywords}`;
+  try {
+    const response = await axios.post(
+      `https://api-inference.huggingface.co/models/${HF_MODEL}`,
+      { inputs: prompt },
+      { headers: { Authorization: `Bearer ${HF_API_KEY}` } }
+    );
+    const text = response.data?.[0]?.generated_text || response.data?.generated_text || '';
+    return {
+      description: text.slice(0, 100),
+      longDescription: text,
+      ingredients: [],
+      tags: [],
+      imageUrl: 'https://placehold.co/600x600.png', // Always provide a fallback image
+    };
+  } catch (error: any) {
+    return {
+      description: 'Model unavailable or quota exceeded.',
+      longDescription: '',
+      ingredients: [],
+      tags: [],
+      imageUrl: 'https://placehold.co/600x600.png', // Fallback image on error
+    };
+  }
 }
 
-const prompt = ai.definePrompt({
-  name: 'productDescriptionGeneratorPrompt',
-  input: {schema: ProductDescriptionInputSchema},
-  output: {schema: ProductDescriptionOutputSchema},
-  prompt: `You are a professional marketing copywriter for a luxury beauty brand called "Glow & Flourish".
-Your tone is elegant, sophisticated, and focused on benefits and sensory experience.
-
-Your task is to generate two product descriptions based on the provided product name and keywords.
-
-Product Name: {{{productName}}}
-Keywords: {{{keywords}}}
-
-1.  **Short Description:** Write a short, catchy description suitable for a product listing page. It should be around 20-30 words and entice the customer to click.
-2.  **Long Description:** Write a full, detailed product description for the product page. It should be 80-120 words long. Elaborate on the benefits, key ingredients mentioned in the keywords, and the experience of using the product.
-
-Return the output in the specified JSON format.`,
-});
-
-const productDescriptionGeneratorFlow = ai.defineFlow(
-  {
-    name: 'productDescriptionGeneratorFlow',
-    inputSchema: ProductDescriptionInputSchema,
-    outputSchema: ProductDescriptionOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
-  }
-);
+// Add support for local image upload and preview
+// This is a placeholder for the backend logic. The UI will need to handle file uploads and convert them to URLs or base64 strings for Firestore storage.
