@@ -287,29 +287,10 @@ export function CheckoutClient() {
                   Place Order
                 </Button>
               )}
-              {!loading && paymentMethod === 'paypal' && paypalSdkReady && (
-                <PayPalButtons
-                  style={{ layout: "vertical" }}
-                  createOrder={(data, actions) => {
-                    return actions.order.create({
-                      intent: "CAPTURE",
-                      purchase_units: [{
-                        amount: {
-                          value: (cartTotal + 50.00).toFixed(2),
-                          currency_code: 'USD' // <-- Change to USD here too
-                        }
-                      }]
-                    });
-                  }}
-                  onApprove={handlePaypalApprove}
-                  disabled={loading}
-                />
-              )}
-              {!loading && paymentMethod === 'paypal' && !paypalSdkReady && (
-                <div className="flex justify-center items-center w-full py-4">
-                  <Loader2 className="h-8 w-8 animate-spin" />
-                  <p className="ml-2">Loading PayPal...</p>
-                  <pre>{JSON.stringify({ paypalClientId, paymentMethod, paypalSdkReady }, null, 2)}</pre>
+              {!loading && paymentMethod === 'paypal' && (
+                <div className="flex flex-col items-center w-full py-4">
+                  <span className="inline-block bg-primary/10 text-primary px-4 py-2 rounded-full font-semibold mb-2">PayPal / Card</span>
+                  <p className="text-muted-foreground">PayPal checkout is coming soon!</p>
                 </div>
               )}
             </CardFooter>

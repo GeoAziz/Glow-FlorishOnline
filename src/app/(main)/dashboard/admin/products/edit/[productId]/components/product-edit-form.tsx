@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -47,40 +46,13 @@ export function ProductEditForm({ product }: ProductEditFormProps) {
     });
     
     const handleGenerateDescription = async () => {
-        const productName = form.getValues("name");
-        if (!productName || !aiKeywords) {
-            toast({
-                title: "Input Required",
-                description: "Please provide a product name and some keywords to generate a description.",
-                variant: "destructive"
-            });
-            return;
-        }
-
-        setIsGenerating(true);
-        try {
-            const result = await generateProductDescription({ productName, keywords: aiKeywords });
-            if (result.description && result.longDescription) {
-                form.setValue("description", result.description, { shouldValidate: true });
-                form.setValue("longDescription", result.longDescription, { shouldValidate: true });
-                toast({
-                    title: "Content Generated!",
-                    description: "The product descriptions have been filled in.",
-                });
-            } else {
-                 throw new Error("AI did not return the expected content.");
-            }
-        } catch (error) {
-            console.error("Error generating product description:", error);
-            toast({
-                title: "Generation Failed",
-                description: "An error occurred while generating the description. Please try again.",
-                variant: "destructive"
-            });
-        } finally {
-            setIsGenerating(false);
-        }
-    };
+    toast({
+      title: "Coming Soon",
+      description: "AI product description generator will be available soon!",
+      variant: "default"
+    });
+    return;
+  };
 
     const onSubmit = (data: ProductFormValues) => {
         startTransition(async () => {

@@ -52,34 +52,12 @@ export function ProductForm() {
     });
 
     const handleGenerateDescription = async () => {
-        const productName = form.getValues("name");
-        if (!productName || !aiKeywords) {
-            toast({
-                title: "Input Required",
-                description: "Please provide a product name and some keywords to generate a description.",
-                variant: "destructive"
-            });
-            return;
-        }
-
-        setIsGenerating(true);
-        try {
-            const result = await generateProductDescription({ productName, keywords: aiKeywords });
-            setAiPreview(result); // Show preview instead of filling fields
-            toast({
-                title: "Preview Ready",
-                description: "Review the AI suggestions before applying.",
-            });
-        } catch (error) {
-            console.error("Error generating product description:", error);
-            toast({
-                title: "Generation Failed",
-                description: "An error occurred while generating the description. Please try again.",
-                variant: "destructive"
-            });
-        } finally {
-            setIsGenerating(false);
-        }
+        toast({
+            title: "Coming Soon",
+            description: "AI product description generator will be available soon!",
+            variant: "default"
+        });
+        return;
     };
 
     const onSubmit = (data: ProductFormValues) => {

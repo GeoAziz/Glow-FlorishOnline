@@ -31,31 +31,16 @@ export default function AiRecommendations({ productDescription }: AiRecommendati
   }, [productDescription]);
 
   return (
-    <Card className="bg-secondary">
+    <Card className="bg-secondary text-center py-12">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 font-headline">
+        <CardTitle className="flex items-center gap-2 font-headline justify-center">
           <Wand2 className="h-6 w-6 text-primary" />
           Personalized Beauty & Wellness Tips
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {loading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-5/6" />
-            <Skeleton className="h-4 w-full" />
-          </div>
-        ) : tips && tips.length > 0 ? (
-          <ul className="space-y-3 list-disc list-inside text-muted-foreground">
-            {tips.map((tip, index) => (
-              <li key={index}>{tip}</li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-muted-foreground">
-            No specific tips available for this product, but remember to always patch test new products and stay hydrated for healthy skin!
-          </p>
-        )}
+        <span className="inline-block bg-primary/10 text-primary px-4 py-2 rounded-full font-semibold">Coming Soon</span>
+        <p className="mt-4 text-muted-foreground">Our AI-powered tips will be available soon!</p>
       </CardContent>
     </Card>
   );
